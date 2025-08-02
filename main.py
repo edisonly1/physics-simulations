@@ -24,7 +24,7 @@ elif page == "Projectile Motion":
 
 elif page == "AI Problem Parser":
     st.title("AI-Powered Problem Interpreter")
-    st.markdown("Paste in an AP Physics 1-style word problem and let Gemini extract the physical setup.")
+    st.markdown("Paste in an AP Physics style word problem and let Gemini extract the physical setup.")
 
     problem = st.text_area("Enter your physics problem:")
 
@@ -34,12 +34,17 @@ elif page == "AI Problem Parser":
         else:
             with st.spinner("Analyzing with Gemini..."):
                 result = extract_physics_info(problem)
+                st.session_state["parsed_result"] = result  # Store for later use
                 st.subheader("Parsed Physics Setup")
                 st.json(result)
-if "initial_velocity" in result and "angle" in result:
-    if st.button("Simulate This Problem"):
-        ProjectileMotion.app(
-            velocity=result["initial_velocity"],
-            angle=result["angle"],
-            height=result.get("height", 0)
-        )
+
+    # Load from session state (after user hits "Extract")
+    parsed = st.session_state.get("parsed_result", None)
+
+    if parsed and "initial_velocity" in parsed and "angle" in parsed:
+        if st.button("Simulate This Problem"):
+            ProjectileMotion.app(
+                velocity=parsed["initial_velocity"],
+                angle=parsed["angle"],
+                height=parsed.get("height", 0)
+            )
