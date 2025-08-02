@@ -44,24 +44,11 @@ def app():
 
     # Plot trajectory
     fig, ax = plt.subplots()
-    ax.plot(x, y, label="Trajectory")
-
-    # Initial velocity vector (red)
-    ax.quiver(0, height, vx, vy, angles='xy', scale_units='xy', scale=1, color='red', label='Initial Velocity $\\vec{v_0}$')
-
-    # Horizontal component (blue)
-    ax.quiver(0, height, vx, 0, angles='xy', scale_units='xy', scale=1, color='blue', alpha=0.6, label='Horizontal $v_x$')
-
-    # Vertical component (green)
-    ax.quiver(0, height, 0, vy, angles='xy', scale_units='xy', scale=1, color='green', alpha=0.6, label='Vertical $v_y$')
-
-    # Labels and formatting
+    ax.plot(x, y)
     ax.set_xlabel("Distance (m)")
     ax.set_ylabel("Height (m)")
-    ax.set_title("Projectile Motion with Velocity Vectors")
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
-    ax.set_aspect('equal', 'box')
-
+    ax.set_title("Projectile Path")
+    ax.grid(True)
     st.pyplot(fig)
 
 
