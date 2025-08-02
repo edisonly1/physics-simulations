@@ -15,12 +15,12 @@ Extract the scenario as structured JSON with fields:
 {{
   "object": "ball",
   "motion_type": "projectile",
-  "mass": 1.2,
-  "angle": 32,
-  "initial_velocity": 12,
+  "mass": null,
+  "angle": null,
+  "initial_velocity": null,
   "height": 0,
   "forces": [],
-  "question_type": "horizontal and vertical velocity components"
+  "question_type": ""
 }}
 
 Only output the JSON object. Do not explain anything.
@@ -35,12 +35,12 @@ Only output the JSON object. Do not explain anything.
     }
 
     response = requests.post(
-        "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct",
+        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
         headers=headers,
         json=payload
     )
 
     if response.status_code != 200:
-        raise RuntimeError(response.json())
+        raise RuntimeError(f"API error {response.status_code}: {response.text}")
 
     return response.json()
