@@ -59,7 +59,7 @@ def app():
     ax.set_xlabel("Distance (m)")
     ax.set_ylabel("Height (m)")
     ax.set_title("Projectile Motion with Velocity Vectors")
-    ax.legend()
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
     ax.set_aspect('equal', 'box')
 
     st.pyplot(fig)
