@@ -1,27 +1,39 @@
 # text_to_sim.py
 
 import streamlit as st
-from openai import OpenAI
-
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+import requests
 
 def extract_physics_info(prompt_text):
-    system_prompt = """You are a physics assistant for AP Physics 1. From a problem like the one below, extract the setup as JSON with these fields:
-{
-  "objects": [{"name": "box", "mass": 2}],
-  "forces": [{"type": "push", "magnitude": 10, "direction": "right"}],
-  "friction": false,
-  "motion_type": "linear",
-  "question": "acceleration"
-}
-Problem examples might involve projectiles, inclines, or forces on objects."""
+    headers = {
+        "Authorization": f"Bearer {st.secrets['HF_API_TOKEN']}"
+    }
 
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Problem: {prompt_text}"}
-        ]
+    payload = {
+        "inputs": f"""You are a physics tutor for AP Physics 1.
+
+Given this problem: {prompt_text}
+
+Extract the scenario as structured JSON with fields:
+- object name
+- motion type
+- mass
+- angle (if relevant)
+- initial velocity
+- forces (if relevant)
+- question type (acceleration, velocity, etc.)""",
+        "parameters": {
+            "max_new_tokens": 300,
+            "temperature": 0.7
+        }
+    }
+
+    response = requests.post(
+        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
+        headers=headers,
+        json=payload
     )
 
-    return response.choices[0].message.content
+    output = response.json()
+    
+    # Return the raw text for now — we'll parse it later
+    return output[0]["generated_text"]
