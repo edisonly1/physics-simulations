@@ -2,9 +2,11 @@
 
 import os
 from openai import OpenAI
+from dotenv import load_dotenv
 
 # Load your API key from .env or environment variable
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def extract_physics_info(prompt_text):
     system_prompt = """You are a physics assistant for AP Physics 1. From a problem like the one below, extract the setup as JSON with these fields:
