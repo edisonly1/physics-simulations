@@ -1,15 +1,17 @@
-from google import generativeai as genai
+import google.generativeai as genai
 import streamlit as st
 import json
 
 def extract_physics_info(problem_text):
-    api_key = st.secrets["GEMINI_API_KEY"]
-    client = genai.Client(api_key=api_key)
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-    prompt = f"""
+    try:
+        model = genai.GenerativeModel("gemini-pro")  # or "gemini-1.5-pro" if you have access
+
+        prompt = f"""
 You are a physics tutor for AP Physics 1.
 
-Your task is to extract the key physics quantities from the following problem and return them as a JSON object with these fields:
+Extract and return only this JSON object based on the problem:
 
 {{
   "object": "...",
@@ -22,20 +24,13 @@ Your task is to extract the key physics quantities from the following problem an
   "question_type": "..."
 }}
 
-Only return a valid JSON object. Do not include explanation.
-
 Problem: {problem_text}
 """
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",  # Or "gemini-1.5-pro" if available
-            contents=prompt
-        )
-
+        response = model.generate_content(prompt)
         content = response.text.strip()
 
-        # Remove markdown block if present
+        # Clean markdown if present
         if content.startswith("```json"):
             content = content.split("```json")[1].split("```")[0].strip()
 
