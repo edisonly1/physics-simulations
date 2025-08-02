@@ -2,43 +2,44 @@
 
 import streamlit as st
 import requests
-import json
 
 def extract_physics_info(prompt_text):
     headers = {
         "Authorization": f"Bearer {st.secrets['HF_API_TOKEN']}"
     }
 
+    # Simpler prompt format (FLAN models don't do well with JSON output)
     prompt = f"""
-You are a physics tutor for AP Physics 1.
+Given this AP Physics 1 problem:
 
-Given this problem: "{prompt_text}"
+"{prompt_text}"
 
-Extract the scenario as structured JSON with fields:
-{{
-  "object": "ball",
-  "motion_type": "projectile",
-  "mass": 1.2,
-  "angle": 32,
-  "initial_velocity": 12,
-  "forces": [],
-  "question_type": "horizontal and vertical velocity components"
-}}
+Extract and identify the following:
+- Object
+- Initial velocity
+- Angle
+- Type of motion
+- What the question is asking for
 
-Only output the JSON object. Do not explain anything.
+Respond like:
+Object: ...
+Initial Velocity: ...
+Angle: ...
+Motion Type: ...
+Question Type: ...
 """
 
     payload = {
         "inputs": prompt,
         "parameters": {
-            "max_new_tokens": 300,
+            "max_new_tokens": 200,
             "temperature": 0.5
         }
     }
 
     try:
         response = requests.post(
-            "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct",
+            "https://api-inference.huggingface.co/models/google/flan-t5-large",
             headers=headers,
             json=payload
         )
@@ -50,15 +51,10 @@ Only output the JSON object. Do not explain anything.
 
         output = response.json()
 
+        # FLAN-T5 returns a string inside a list of dicts
         if isinstance(output, list) and "generated_text" in output[0]:
-            raw_json = output[0]["generated_text"].strip()
-            try:
-                parsed = json.loads(raw_json)
-                return parsed
-            except Exception as e:
-                st.error("Failed to parse model output into JSON.")
-                st.code(raw_json)
-                return {"error": "Invalid JSON returned from model."}
+            result = output[0]["generated_text"].strip()
+            return {"extracted": result}
         else:
             st.error("Unexpected model output format.")
             st.json(output)
