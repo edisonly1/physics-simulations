@@ -1,44 +1,38 @@
 import streamlit as st
 import ProjectileMotion
-from motion_parser import parse_problem
+from text_to_sim import extract_physics_info
 
+# Sidebar Navigation
 st.sidebar.title("Physics Simulation Lab")
-page = st.sidebar.selectbox("Choose a Simulation", [
-    "Home",
-    "Projectile Motion (Manual)",
-    "Projectile Motion (AI Word Problem)"
-])
+page = st.sidebar.selectbox("Choose a Simulation", ["Home", "Projectile Motion", "AI Problem Parser"])
 
+# Page Routing
 if page == "Home":
-    st.title("Welcome to AP Physics Simulator")
-    st.markdown("Use the sidebar to explore different simulations.")
+    st.title("Welcome to the Physics Simulation Lab!")
+    st.markdown("""
+    This tool is designed to help visualize AP Physics 1 problems.
+    
+    - Use AI to break down word problems
+    - Explore projectile motion with graphs and sliders
+    - More simulations coming soon!
+    
+    Select a simulation from the sidebar to get started.
+    """)
 
-elif page == "Projectile Motion (Manual)":
-    ProjectileMotion.app()
+elif page == "Projectile Motion":
+    ProjectileMotion.app()  # Assuming this is defined in ProjectileMotion.py
 
-elif page == "Projectile Motion (AI Word Problem)":
-    st.title("AI Word Problem Interpreter")
-    problem = st.text_area("Paste an AP Physics 1-style word problem:")
+elif page == "AI Problem Parser":
+    st.title("AI-Powered Problem Interpreter")
+    st.markdown("Paste in an AP Physics 1-style word problem and let Gemini extract the physical setup.")
 
-    if st.button("Extract and Simulate"):
-        parsed = parse_problem(problem)
-        st.write("Parsed Data:", parsed)
+    problem = st.text_area("Enter your physics problem:")
 
-        v0 = parsed.get("initial_velocity")
-        angle = parsed.get("angle")
-        height = parsed.get("height", 0)
-
-        if v0 and angle is not None:
-            from ProjectileMotion import simulate_projectile
-            x, y, t_flight = simulate_projectile(v0, angle, height)
-
-            st.markdown(f"**Time of Flight:** {t_flight:.2f} s")
-            fig, ax = plt.subplots()
-            ax.plot(x, y)
-            ax.set_xlabel("Distance (m)")
-            ax.set_ylabel("Height (m)")
-            ax.set_title("Trajectory")
-            ax.grid(True)
-            st.pyplot(fig)
+    if st.button("Extract Physics Info"):
+        if problem.strip() == "":
+            st.warning("Please enter a problem first.")
         else:
-            st.error("Could not extract velocity or angle. Please revise.")
+            with st.spinner("Analyzing with Gemini..."):
+                result = extract_physics_info(problem)
+                st.subheader("Parsed Physics Setup")
+                st.json(result)
