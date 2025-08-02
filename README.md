@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Physics Simulations App
 
 This Streamlit web app lets students explore classical physics concepts interactively.  test
@@ -7,4 +6,3 @@ This Streamlit web app lets students explore classical physics concepts interact
 - Projectile Motion
 
 More simulations coming soon!
-=======
