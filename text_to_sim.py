@@ -3,7 +3,7 @@ import streamlit as st
 import json
 
 def extract_physics_info(problem_text):
-    openai.api_key = st.secrets["OPENAI_API_KEY"]
+    client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
     system_prompt = """
 You are a helpful AP Physics 1 tutor.
@@ -27,7 +27,7 @@ Only output the JSON. Do not explain anything.
     user_prompt = f"Problem: {problem_text}"
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -35,10 +35,7 @@ Only output the JSON. Do not explain anything.
             ],
             temperature=0.3
         )
-        content = response["choices"][0]["message"]["content"]
-
-        # Optional: parse and validate the returned JSON
+        content = response.choices[0].message.content
         return json.loads(content)
-
     except Exception as e:
         return {"error": str(e)}
