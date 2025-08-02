@@ -1,9 +1,8 @@
 # text_to_sim.py
 
-import os
+import streamlit as st
 from openai import OpenAI
 
-# Load your API key from .env or environment variable
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def extract_physics_info(prompt_text):
