@@ -6,7 +6,7 @@ def extract_physics_info(problem_text):
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash-lite")
 
         prompt = f"""
 You are an AP Physics 1 tutor.
