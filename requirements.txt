@@ -1,5 +1,6 @@
 streamlit
-numpy
+openai
 matplotlib
+numpy
 vpython
 requests

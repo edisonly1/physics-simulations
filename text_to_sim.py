@@ -1,46 +1,44 @@
+import openai
 import streamlit as st
-import requests
+import json
 
-def extract_physics_info(prompt_text):
-    headers = {
-        "Authorization": f"Bearer {st.secrets['HF_API_TOKEN']}"
-    }
+def extract_physics_info(problem_text):
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-    prompt = f"""
-You are a physics tutor for AP Physics 1.
+    system_prompt = """
+You are a helpful AP Physics 1 tutor.
 
-Given this problem: "{prompt_text}"
+Your task is to extract key physics quantities and motion types from a word problem.
 
-Extract the scenario as structured JSON with fields:
-{{
-  "object": "ball",
-  "motion_type": "projectile",
+Return only a JSON object with the following fields:
+{
+  "object": "...",
+  "motion_type": "...",
   "mass": null,
-  "angle": null,
   "initial_velocity": null,
+  "angle": null,
   "height": 0,
   "forces": [],
-  "question_type": ""
-}}
-
-Only output the JSON object. Do not explain anything.
+  "question_type": "..."
+}
+Only output the JSON. Do not explain anything.
 """
 
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 300,
-            "temperature": 0.5
-        }
-    }
+    user_prompt = f"Problem: {problem_text}"
 
-    response = requests.post(
-        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
-        headers=headers,
-        json=payload
-    )
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.3
+        )
+        content = response["choices"][0]["message"]["content"]
 
-    if response.status_code != 200:
-        raise RuntimeError(f"API error {response.status_code}: {response.text}")
+        # Optional: parse and validate the returned JSON
+        return json.loads(content)
 
-    return response.json()
+    except Exception as e:
+        return {"error": str(e)}
