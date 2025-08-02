@@ -17,7 +17,7 @@ def extract_physics_info(prompt_text):
 Problem examples might involve projectiles, inclines, or forces on objects."""
 
     response = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"Problem: {prompt_text}"}
