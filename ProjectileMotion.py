@@ -31,15 +31,15 @@ def app():
     st.markdown(f"- **Horizontal Range:** {range_x:.2f} meters")
 
     # Show formulas used
-    with st.expander("📘 View Calculations and Formulas"):
+    with st.expander("View Calculations and Formulas"):
         st.markdown(r"""
         **Equations Used:**
 
-        - Horizontal velocity:  \[ v_x = v_0 \cos(\theta) \]
-        - Vertical velocity:    \[ v_y = v_0 \sin(\theta) \]
-        - Time of flight:       \[ t = \frac{v_y + \sqrt{v_y^2 + 2gh}}{g} \]
-        - Horizontal distance:  \[ x(t) = v_x \cdot t \]
-        - Vertical position:    \[ y(t) = h + v_y t - \frac{1}{2} g t^2 \]
+        - Horizontal velocity:  $v_x = v_0 \cos(\theta)$
+        - Vertical velocity:    $v_y = v_0 \sin(\theta)$
+        - Time of flight:       $t = \frac{v_y + \sqrt{v_y^2 + 2gh}}{g}$
+        - Horizontal distance:  $x(t) = v_x \cdot t$
+        - Vertical position:    $y(t) = h + v_y t - \frac{1}{2} g t^2$
         """)
 
     # Plot trajectory
