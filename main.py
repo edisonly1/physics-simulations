@@ -3,7 +3,7 @@ import ProjectileMotion
 from text_to_sim import extract_physics_info
 
 st.sidebar.title("Physics Simulation Lab")
-page = st.sidebar.selectbox("Choose a Simulation", ["Home", "Projectile Motion", "AI Problem"])
+page = st.sidebar.selectbox("Choose a Simulation", ["Home", "Projectile Motion", "AI Problem Parser"])
 
 if page == "Home":
     st.title("Welcome!")
