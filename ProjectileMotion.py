@@ -50,5 +50,18 @@ def app():
     ax.set_title("Projectile Path")
     ax.grid(True)
     st.pyplot(fig)
+def simulate_projectile(v0, angle_deg, h=0):
+    g = 9.8
+    angle_rad = np.radians(angle_deg)
+    vx = v0 * np.cos(angle_rad)
+    vy = v0 * np.sin(angle_rad)
+
+    t_flight = (vy + np.sqrt(vy**2 + 2 * g * h)) / g
+    t = np.linspace(0, t_flight, 300)
+
+    x = vx * t
+    y = h + vy * t - 0.5 * g * t**2
+
+    return x, y, t_flight
 
 

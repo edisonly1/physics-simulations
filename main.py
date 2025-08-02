@@ -1,27 +1,44 @@
 import streamlit as st
 import ProjectileMotion
-from text_to_sim import extract_physics_info
+from motion_parser import parse_problem
 
 st.sidebar.title("Physics Simulation Lab")
-page = st.sidebar.selectbox("Choose a Simulation", ["Home", "Projectile Motion", "AI Problem Parser"])
+page = st.sidebar.selectbox("Choose a Simulation", [
+    "Home",
+    "Projectile Motion (Manual)",
+    "Projectile Motion (AI Word Problem)"
+])
 
 if page == "Home":
-    st.title("Welcome!")
-    st.markdown("Use the sidebar to explore simulations.")
-elif page == "Projectile Motion":
+    st.title("Welcome to AP Physics Simulator")
+    st.markdown("Use the sidebar to explore different simulations.")
+
+elif page == "Projectile Motion (Manual)":
     ProjectileMotion.app()
-elif page == "AI Problem Parser":
-    st.title("AI-Powered Problem Interpreter")
 
-    st.markdown("Paste an AP Physics 1-style word problem and let AI break it down into physics quantities and concepts.")
+elif page == "Projectile Motion (AI Word Problem)":
+    st.title("AI Word Problem Interpreter")
+    problem = st.text_area("Paste an AP Physics 1-style word problem:")
 
-    problem = st.text_area("Enter your physics problem:")
-    
-    if st.button("Extract Physics Info"):
-        with st.spinner("Thinking..."):
-            try:
-                parsed = extract_physics_info(problem)
-                st.subheader("Parsed Physics Setup")
-                st.json(parsed)
-            except Exception as e:
-                st.error(f"Something went wrong: {e}")
+    if st.button("Extract and Simulate"):
+        parsed = parse_problem(problem)
+        st.write("Parsed Data:", parsed)
+
+        v0 = parsed.get("initial_velocity")
+        angle = parsed.get("angle")
+        height = parsed.get("height", 0)
+
+        if v0 and angle is not None:
+            from ProjectileMotion import simulate_projectile
+            x, y, t_flight = simulate_projectile(v0, angle, height)
+
+            st.markdown(f"**Time of Flight:** {t_flight:.2f} s")
+            fig, ax = plt.subplots()
+            ax.plot(x, y)
+            ax.set_xlabel("Distance (m)")
+            ax.set_ylabel("Height (m)")
+            ax.set_title("Trajectory")
+            ax.grid(True)
+            st.pyplot(fig)
+        else:
+            st.error("Could not extract velocity or angle. Please revise.")
