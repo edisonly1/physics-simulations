@@ -36,3 +36,10 @@ elif page == "AI Problem Parser":
                 result = extract_physics_info(problem)
                 st.subheader("Parsed Physics Setup")
                 st.json(result)
+if "initial_velocity" in result and "angle" in result:
+    if st.button("Simulate This Problem"):
+        ProjectileMotion.app(
+            velocity=result["initial_velocity"],
+            angle=result["angle"],
+            height=result.get("height", 0)
+        )
