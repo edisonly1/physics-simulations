@@ -6,12 +6,12 @@ def extract_physics_info(problem_text):
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
     try:
-        model = genai.GenerativeModel("gemini-pro")  # or "gemini-1.5-pro" if you have access
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         prompt = f"""
-You are a physics tutor for AP Physics 1.
+You are an AP Physics 1 tutor.
 
-Extract and return only this JSON object based on the problem:
+Extract only the physics parameters from this word problem and return them as a JSON object in this format:
 
 {{
   "object": "...",
@@ -30,7 +30,6 @@ Problem: {problem_text}
         response = model.generate_content(prompt)
         content = response.text.strip()
 
-        # Clean markdown if present
         if content.startswith("```json"):
             content = content.split("```json")[1].split("```")[0].strip()
 
