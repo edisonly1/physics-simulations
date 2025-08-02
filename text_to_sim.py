@@ -2,6 +2,7 @@
 
 import streamlit as st
 import requests
+import json
 
 def extract_physics_info(prompt_text):
     headers = {
@@ -42,7 +43,6 @@ Only output the JSON object. Do not explain anything.
             json=payload
         )
 
-        # Check for non-200 response
         if response.status_code != 200:
             st.error(f"Hugging Face API error: {response.status_code}")
             st.code(response.text)
@@ -50,9 +50,15 @@ Only output the JSON object. Do not explain anything.
 
         output = response.json()
 
-        # Sometimes Hugging Face returns just a string, sometimes a list
         if isinstance(output, list) and "generated_text" in output[0]:
-            return output[0]["generated_text"]
+            raw_json = output[0]["generated_text"].strip()
+            try:
+                parsed = json.loads(raw_json)
+                return parsed
+            except Exception as e:
+                st.error("Failed to parse model output into JSON.")
+                st.code(raw_json)
+                return {"error": "Invalid JSON returned from model."}
         else:
             st.error("Unexpected model output format.")
             st.json(output)
