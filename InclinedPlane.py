@@ -51,7 +51,44 @@ def app(data=None):
     st.markdown(f"- **Final Velocity:** `{final_velocity:.2f} m/s`")
     st.markdown(f"- **Time to reach bottom:** `{time:.2f} s`")
 
-    # --- Step-by-step acceleration calculation if requested by question_type ---
+    if use_ai and motion_type == "inclined" and question_type in ["acceleration", "forces"]:
+        st.markdown("#### Free-Body Diagram (FBD) for the Block on the Incline:")
+
+        fig_fbd, ax_fbd = plt.subplots(figsize=(4, 4))
+        # Draw ramp (from (0,0) to (Lx, Ly))
+        L = 2.0  # short ramp for FBD clarity
+        ramp_x = [0, L * np.cos(theta_rad)]
+        ramp_y = [0, L * np.sin(theta_rad)]
+        ax_fbd.plot(ramp_x, ramp_y, 'k-', lw=3)
+        # Block at middle
+        block_center_x = L * 0.5 * np.cos(theta_rad)
+        block_center_y = L * 0.5 * np.sin(theta_rad)
+        ax_fbd.plot(block_center_x, block_center_y, 's', color='tab:blue', markersize=18)
+        # Draw gravity (down)
+        ax_fbd.arrow(block_center_x, block_center_y, 0, -0.7, head_width=0.07, head_length=0.1, fc='g', ec='g', lw=2)
+        ax_fbd.text(block_center_x-0.1, block_center_y-0.5, r'$\vec{mg}$', fontsize=12, color='g')
+        # Draw normal (perpendicular to ramp, up from block)
+        n_dx = 0.5 * np.sin(theta_rad)
+        n_dy = 0.5 * np.cos(theta_rad)
+        ax_fbd.arrow(block_center_x, block_center_y, n_dx, n_dy, head_width=0.07, head_length=0.1, fc='orange', ec='orange', lw=2)
+        ax_fbd.text(block_center_x + n_dx + 0.05, block_center_y + n_dy + 0.05, r'$\vec{N}$', fontsize=12, color='orange')
+        # Draw friction (left along ramp if present)
+        if mu > 0:
+            f_dx = -0.5 * np.cos(theta_rad)
+            f_dy = 0.5 * np.sin(theta_rad)
+            ax_fbd.arrow(block_center_x, block_center_y, f_dx, f_dy, head_width=0.07, head_length=0.1, fc='brown', ec='brown', lw=2)
+            ax_fbd.text(block_center_x + f_dx - 0.1, block_center_y + f_dy + 0.05, r'$\vec{f}_k$', fontsize=12, color='brown')
+        # Draw parallel force (down ramp)
+        par_dx = 0.6 * np.cos(theta_rad)
+        par_dy = 0.6 * np.sin(theta_rad)
+        ax_fbd.arrow(block_center_x, block_center_y, par_dx, par_dy, head_width=0.07, head_length=0.1, fc='r', ec='r', lw=2)
+        ax_fbd.text(block_center_x + par_dx + 0.05, block_center_y + par_dy - 0.05, r'$\vec{F}_{\parallel}$', fontsize=12, color='r')
+        ax_fbd.set_xlim(-0.7, 1.7)
+        ax_fbd.set_ylim(-0.7, 1.7)
+        ax_fbd.axis('off')
+        st.pyplot(fig_fbd)
+
+    # Step-by-step acceleration calculation
     if (
         use_ai and
         motion_type == "inclined" and
@@ -123,7 +160,7 @@ def app(data=None):
 
     st.image(tmpfile.name, caption="Inclined Plane Animation", use_container_width=True)
 
-    # Plots for position/velocity vs time (optional)
+    # Plots for position/velocity vs time
     with st.expander("View Position & Velocity vs Time Graphs"):
         fig2, ax2 = plt.subplots()
         ax2.plot(t, s, label="Position (m)")
