@@ -3,12 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import tempfile
-import os
 
 def app(data=None):
     st.title("Animated Projectile Motion Simulator")
 
-    # Inputs
+    # --- Input Handling ---
     if data:
         v0 = float(data.get("initial_velocity", 20))
         angle_deg = float(data.get("angle", 45))
@@ -19,20 +18,32 @@ def app(data=None):
         angle_deg = st.slider("Launch Angle (degrees)", 0.0, 90.0, 45.0, step=0.1)
         h0 = st.slider("Initial Height (m)", 0.0, 10.0, 0.0, step=0.1)
 
-    # Physics
+    # --- Physics Calculation ---
     g = 9.8
     theta = np.radians(angle_deg)
     vx = v0 * np.cos(theta)
     vy = v0 * np.sin(theta)
-    t_flight = (vy + np.sqrt(vy**2 + 2 * g * h0)) / g
+    discrim = vy**2 + 2 * g * h0
+    t_flight = (vy + np.sqrt(discrim)) / g if discrim >= 0 else 0
+
+    # Error/edge case handling
+    if t_flight <= 0 or (v0 == 0 and h0 == 0):
+        st.warning("The object does not move. Please check your initial conditions.")
+        return
+
     t_vals = np.linspace(0, t_flight, 120)
     x_vals = vx * t_vals
     y_vals = h0 + vy * t_vals - 0.5 * g * t_vals**2
 
-    # --- Animation ---
+    # Check for valid animation
+    if len(x_vals) < 2 or np.all(y_vals <= 0):
+        st.warning("No valid trajectory to animate. Try changing the parameters.")
+        return
+
+    # --- Animation Block ---
     fig, ax = plt.subplots()
-    ax.set_xlim(0, np.max(x_vals)*1.05)
-    ax.set_ylim(0, max(np.max(y_vals)*1.05, 1))
+    ax.set_xlim(0, np.max(x_vals) * 1.05)
+    ax.set_ylim(0, max(np.max(y_vals) * 1.05, 1))
     ax.set_xlabel("Distance (m)")
     ax.set_ylabel("Height (m)")
     ax.set_title("Projectile Path (Animated)")
@@ -46,29 +57,23 @@ def app(data=None):
         return line, point
 
     def animate(i):
-        line.set_data(x_vals[:i+1], y_vals[:i+1])
+        line.set_data(x_vals[:i + 1], y_vals[:i + 1])
         point.set_data(x_vals[i], y_vals[i])
         return line, point
 
     ani = FuncAnimation(fig, animate, frames=len(t_vals), init_func=init, blit=True, interval=20)
 
-    # Save to a temporary file
+    # Save animation to a temp GIF
     tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix='.gif')
     ani.save(tmpfile.name, writer='pillow')
+    plt.close(fig)
 
-    plt.close(fig)  # Prevents double display in Streamlit
-
-    # Show the GIF in Streamlit
     st.image(tmpfile.name, caption="Projectile Animation", use_column_width=True)
 
-    # Remove temp file after use
-    # os.remove(tmpfile.name)  # Uncomment for local cleanup; Streamlit Cloud cleans up temp automatically
-
-    # Results (as before)
+    # --- Results ---
     st.markdown("### Results")
     st.markdown(f"- **Time of Flight:** `{t_flight:.2f}` seconds")
     st.markdown(f"- **Horizontal Range:** `{x_vals[-1]:.2f}` meters")
-
 
     with st.expander("View Calculations and Formulas"):
         st.markdown(r"""
@@ -80,4 +85,3 @@ def app(data=None):
         - Horizontal distance:  $x(t) = v_x \cdot t$  
         - Vertical position:    $y(t) = h + v_y t - \frac{1}{2} g t^2$  
         """)
-
