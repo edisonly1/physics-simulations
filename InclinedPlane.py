@@ -231,24 +231,37 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     ax.plot(block_rot[:, 0], block_rot[:, 1], color="royalblue", lw=2)
     ax.fill(block_rot[:, 0], block_rot[:, 1], "royalblue", alpha=0.7)
 
-    block_center = np.array([xb, yb])
+   block_center = np.array([xb, yb])
+
     # Gravity (down)
-    ax.arrow(*block_center, 0, -mg*0.15, head_width=0.13, head_length=0.18, fc='green', ec='green', lw=3, length_includes_head=True)
-    ax.text(block_center[0], block_center[1] - mg*0.18 - 0.2, r"$mg$", color="green", fontsize=18)
+    mg_dx, mg_dy = 0, -mg*0.15
+    mg_tip = (block_center[0] + mg_dx, block_center[1] + mg_dy)
+    ax.arrow(*block_center, mg_dx, mg_dy, head_width=0.13, head_length=0.18, fc='green', ec='green', lw=3, length_includes_head=True)
+    ax.text(mg_tip[0], mg_tip[1] - 0.12, r"$mg$", color="green", fontsize=18, ha="center", va="top")
+
     # Normal (perpendicular)
     nx = np.sin(theta)
     ny = np.cos(theta)
-    ax.arrow(*block_center, nx*fn*0.06, ny*fn*0.06, head_width=0.13, head_length=0.18, fc='orange', ec='orange', lw=3, length_includes_head=True)
-    ax.text(block_center[0] + nx*fn*0.09 + 0.12, block_center[1] + ny*fn*0.09, r"$N$", color="orange", fontsize=18)
+    fn_dx, fn_dy = nx*fn*0.06, ny*fn*0.06
+    fn_tip = (block_center[0] + fn_dx, block_center[1] + fn_dy)
+    ax.arrow(*block_center, fn_dx, fn_dy, head_width=0.13, head_length=0.18, fc='orange', ec='orange', lw=3, length_includes_head=True)
+    ax.text(fn_tip[0] + 0.08, fn_tip[1] + 0.08, r"$N$", color="orange", fontsize=18, ha="left", va="bottom")
+
     # Parallel (down ramp)
     px = np.cos(theta)
     py = -np.sin(theta)
-    ax.arrow(*block_center, px*fp*0.08, py*fp*0.08, head_width=0.13, head_length=0.18, fc='red', ec='red', lw=3, length_includes_head=True)
-    ax.text(block_center[0] + px*fp*0.11, block_center[1] + py*fp*0.11 - 0.1, r"$F_{\parallel}$", color="red", fontsize=18)
+    fp_dx, fp_dy = px*fp*0.08, py*fp*0.08
+    fp_tip = (block_center[0] + fp_dx, block_center[1] + fp_dy)
+    ax.arrow(*block_center, fp_dx, fp_dy, head_width=0.13, head_length=0.18, fc='red', ec='red', lw=3, length_includes_head=True)
+    ax.text(fp_tip[0] + 0.06, fp_tip[1] - 0.06, r"$F_{\parallel}$", color="red", fontsize=18, ha="left", va="top")
+
     # Friction (if present, up the ramp)
     if show_friction and mu > 0:
-        ax.arrow(*block_center, -px*f_friction*0.06, -py*f_friction*0.06, head_width=0.13, head_length=0.18, fc='brown', ec='brown', lw=3, length_includes_head=True)
-        ax.text(block_center[0] - px*f_friction*0.09, block_center[1] - py*f_friction*0.09 + 0.1, r"$f_k$", color="brown", fontsize=18)
+        ffric_dx, ffric_dy = -px*f_friction*0.06, -py*f_friction*0.06
+        ffric_tip = (block_center[0] + ffric_dx, block_center[1] + ffric_dy)
+        ax.arrow(*block_center, ffric_dx, ffric_dy, head_width=0.13, head_length=0.18, fc='brown', ec='brown', lw=3, length_includes_head=True)
+        ax.text(ffric_tip[0] - 0.07, ffric_tip[1] + 0.07, r"$f_k$", color="brown", fontsize=18, ha="right", va="bottom")
+
 
     ax.set_aspect("equal")
     ax.axis("off")
