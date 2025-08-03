@@ -48,7 +48,7 @@ elif page == "AI Problem Parser":
                 ProjectileMotion.app(data=parsed)
             elif motion_type in ["free fall"]:
                 FreeFall.app(data=parsed)
-            elif constraints == "incline":
+            elif "incline" in constraints:
                 InclinedPlane.app(data=parsed)
             else:
                 st.warning(f"Simulation for motion type '{motion_type}' not implemented.")
