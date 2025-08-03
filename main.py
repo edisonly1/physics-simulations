@@ -1,6 +1,8 @@
 import streamlit as st
 import ProjectileMotion
 from text_to_sim import extract_physics_info
+import InclinedPlane
+import FreeFall
 
 # Sidebar Navigation
 st.sidebar.title("Physics Simulation Lab")
@@ -20,7 +22,7 @@ if page == "Home":
     """)
 
 elif page == "Projectile Motion":
-    ProjectileMotion.app()  # Assuming this is defined in ProjectileMotion.py
+    ProjectileMotion.app()
 
 elif page == "AI Problem Parser":
     st.title("AI-Powered Problem Interpreter")
@@ -43,8 +45,13 @@ elif page == "AI Problem Parser":
 
     if parsed and "initial_velocity" in parsed and "angle" in parsed:
         if st.button("Simulate This Problem"):
-            ProjectileMotion.app(
-                velocity=parsed["initial_velocity"],
-                angle=parsed["angle"],
-                height=parsed.get("height", 0)
-            )
+            motion_type = parsed.get("motion_type", "").lower()
+            if motion_type == "projectile":
+                ProjectileMotion.app(data=parsed)
+            elif motion_type in ["free fall", "linear"]:
+                FreeFall.app(data=parsed)
+            elif motion_type == "inclined":
+                InclinedPlane.app(data=parsed)
+            else:
+                st.warning(f"Simulation for motion type '{motion_type}' not implemented.")
+

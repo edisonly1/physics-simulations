@@ -2,19 +2,17 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-def app(velocity=None, angle=None, height=0):
+def app(data=None):
     st.title("Projectile Motion Simulator")
 
-    use_ai = velocity is not None and angle is not None
-
-    if use_ai:
+    if data:
+        v0 = float(data.get("initial_velocity", 0))
+        angle_deg = float(data.get("angle", 0))
+        h0 = float(data.get("height", 0))
         st.markdown("#### Using AI-extracted values:")
-        st.markdown(f"- **Initial Velocity:** `{velocity} m/s`")
-        st.markdown(f"- **Launch Angle:** `{angle}°`")
-        st.markdown(f"- **Initial Height:** `{height} m`")
-        v0 = float(velocity)
-        angle_deg = float(angle)
-        h0 = float(height)
+        st.markdown(f"- **Initial Velocity:** `{v0} m/s`")
+        st.markdown(f"- **Launch Angle:** `{angle_deg}°`")
+        st.markdown(f"- **Initial Height:** `{h0} m`")
     else:
         v0 = st.slider("Initial Velocity (m/s)", 0.0, 50.0, 25.0, step=0.1)
         angle_deg = st.slider("Launch Angle (degrees)", 0.0, 90.0, 45.0, step=0.1)
