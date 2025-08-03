@@ -2,21 +2,24 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.patches import FancyArrowPatch
 import tempfile
 
 def app(data=None):
     st.title("Animated Projectile Motion Simulator")
 
     # --- Input Handling ---
+    v0 = float(data.get("initial_velocity", 20)) if data else st.slider("Initial Velocity (m/s)", 0.0, 50.0, 25.0, step=0.1)
+    angle_deg = float(data.get("angle", 45)) if data else st.slider("Launch Angle (degrees)", 0.0, 90.0, 45.0, step=0.1)
+    h0 = float(data.get("height", 0)) if data else st.slider("Initial Height (m)", 0.0, 10.0, 0.0, step=0.1)
+    question_type = data.get("question_type", "").lower() if data else ""
+
     if data:
-        v0 = float(data.get("initial_velocity", 20))
-        angle_deg = float(data.get("angle", 45))
-        h0 = float(data.get("height", 0))
         st.markdown(f"**Initial Velocity:** {v0} m/s  \n**Angle:** {angle_deg}°  \n**Height:** {h0} m")
+        if question_type == "range":
+            st.success(f"AI determined the question type is *range*. The range is **{(v0 * np.cos(np.radians(angle_deg)) * ((v0 * np.sin(np.radians(angle_deg)) + np.sqrt((v0 * np.sin(np.radians(angle_deg)))**2 + 2 * 10.0 * h0)) / 10.0)):.2f} meters**.")
     else:
-        v0 = st.slider("Initial Velocity (m/s)", 0.0, 50.0, 25.0, step=0.1)
-        angle_deg = st.slider("Launch Angle (degrees)", 0.0, 90.0, 45.0, step=0.1)
-        h0 = st.slider("Initial Height (m)", 0.0, 10.0, 0.0, step=0.1)
+        st.info("Adjust the sliders to see the projectile's flight.")
 
     # --- Physics Calculation ---
     g = 10.0
@@ -26,12 +29,11 @@ def app(data=None):
     discrim = vy**2 + 2 * g * h0
     t_flight = (vy + np.sqrt(discrim)) / g if discrim >= 0 else 0
 
-    # Error/edge case handling
     if t_flight <= 0 or (v0 == 0 and h0 == 0):
         st.warning("The object does not move. Please check your initial conditions.")
         return
 
-    t_vals = np.linspace(0, t_flight, 120)
+    t_vals = np.linspace(0, t_flight, 180)
     x_vals = vx * t_vals
     y_vals = h0 + vy * t_vals - 0.5 * g * t_vals**2
 
@@ -41,14 +43,18 @@ def app(data=None):
         return
 
     fig, ax = plt.subplots()
-    ax.set_xlim(0, max(np.max(x_vals)*1.05, 1))
-    ax.set_ylim(0, max(np.max(y_vals)*1.05, 1))
+    ax.set_xlim(0, max(np.max(x_vals) * 1.05, 1))
+    ax.set_ylim(0, max(np.max(y_vals) * 1.05, 1))
     ax.set_xlabel("Distance (m)")
     ax.set_ylabel("Height (m)")
     ax.set_title("Projectile Path (Animated)")
 
-    line, = ax.plot([], [], 'b-', lw=2)
-    point, = ax.plot([], [], 'ro', markersize=8)
+    # Static background trajectory
+    ax.plot(x_vals, y_vals, '--', color='lightgray', label="Full Trajectory")
+
+    line, = ax.plot([], [], 'b-', lw=2, label="Path So Far")
+    point, = ax.plot([], [], 'ro', markersize=8, label="Ball")
+    arrow = [None]  # To update velocity vector
 
     def init():
         line.set_data([], [])
@@ -57,17 +63,37 @@ def app(data=None):
 
     def animate(i):
         idx = min(i, n_frames - 1)
-        # Defensive: ensure idx is in range
-        if idx < 0 or idx >= n_frames:
-            return line, point
+        t = t_vals[idx]
+
+        # Path trail up to current frame
         line.set_data(x_vals[:idx + 1], y_vals[:idx + 1])
+        # Current position of the ball
         point.set_data(x_vals[idx:idx + 1], y_vals[idx:idx + 1])
-        return line, point
+
+        # Remove the previous arrow, if any
+        if arrow[0] is not None:
+            try:
+                arrow[0].remove()
+            except Exception:
+                pass
+
+        # Instantaneous velocity
+        vx_i = vx
+        vy_i = vy - g * t
+        scale = 0.2 * np.sqrt(vx_i**2 + vy_i**2)  # Scaling for visual clarity
+
+        # Add velocity arrow
+        arrow[0] = FancyArrowPatch(
+            (x_vals[idx], y_vals[idx]),
+            (x_vals[idx] + scale * vx_i / (np.sqrt(vx_i**2 + vy_i**2) + 1e-6), 
+             y_vals[idx] + scale * vy_i / (np.sqrt(vx_i**2 + vy_i**2) + 1e-6)),
+            color='green', arrowstyle='->', mutation_scale=20, linewidth=2
+        )
+        ax.add_patch(arrow[0])
+        return line, point, arrow[0]
 
     ani = FuncAnimation(fig, animate, frames=n_frames, init_func=init, blit=True, interval=20)
 
-
-    # Save animation to a temp GIF
     tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix='.gif')
     ani.save(tmpfile.name, writer='pillow')
     plt.close(fig)
@@ -89,4 +115,3 @@ def app(data=None):
         - Horizontal distance:  $x(t) = v_x \cdot t$  
         - Vertical position:    $y(t) = h + v_y t - \frac{1}{2} g t^2$  
         """)
-
