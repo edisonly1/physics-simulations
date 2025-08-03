@@ -1,112 +1,57 @@
 import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-import tempfile
+import ProjectileMotion
+from text_to_sim import extract_physics_info
+import InclinedPlane
+import FreeFall
 
-def app(data=None):
-    st.title("Inclined Plane Simulator (Animated)")
+# Sidebar Navigation
+st.sidebar.title("Physics Simulation Lab")
+page = st.sidebar.selectbox("Choose a Simulation", ["Home", "Projectile Motion", "AI Problem Parser"])
 
-    g = 10.0  # gravity
+# Page Routing
+if page == "Home":
+    st.title("Welcome to the Physics Simulation Lab!")
+    st.markdown("""
+    This tool is designed to help visualize AP Physics 1 problems.
+    
+    - Use AI to break down word problems
+    - Explore projectile motion with graphs and sliders
+    - More simulations coming soon!
+    
+    Select a simulation from the sidebar to get started.
+    """)
 
-    use_ai = data is not None
+elif page == "Projectile Motion":
+    ProjectileMotion.app()
 
-    if use_ai:
-        st.markdown("#### Using AI-extracted values:")
-        angle = float(data.get("angle", 30))
-        mass = float(data.get("mass", 1))
-        mu = float(data.get("friction", 0))
-        length = float(data.get("length", 5))  # length of ramp
-    else:
-        mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0)
-        angle = st.slider("Incline Angle (°)", 0.0, 90.0, 30.0)
-        mu = st.slider("Friction Coefficient (μ)", 0.0, 1.0, 0.0)
-        length = st.slider("Ramp Length (m)", 0.1, 20.0, 5.0)
+elif page == "AI Problem Parser":
+    st.title("AI-Powered Problem Interpreter")
+    st.markdown("Paste in an AP Physics style word problem and let Gemini extract the physical setup.")
 
-    theta_rad = np.radians(angle)
+    problem = st.text_area("Enter your physics problem:")
 
-    # Forces & kinematics
-    f_parallel = mass * g * np.sin(theta_rad)
-    f_normal = mass * g * np.cos(theta_rad)
-    f_friction = mu * f_normal
-    f_net = f_parallel - f_friction
-    acceleration = f_net / mass
-
-    # Final velocity: v² = 2aL
-    final_velocity = np.sqrt(2 * acceleration * length) if acceleration > 0 else 0
-    time = final_velocity / acceleration if acceleration > 0 else 0
-
-    st.markdown("### Results")
-    st.markdown(f"- **Acceleration:** `{acceleration:.2f} m/s²`")
-    st.markdown(f"- **Final Velocity:** `{final_velocity:.2f} m/s`")
-    st.markdown(f"- **Time to reach bottom:** `{time:.2f} s`")
-
-    # Kinematics
-    t = np.linspace(0, time, 120) if time > 0 else np.array([0])
-    s = 0.5 * acceleration * t**2
-    s = np.clip(s, 0, length)  # <-- Clamp block position to ramp length
-
-    # Ramp geometry: always top-left (start) to bottom-right (end)
-    x0, y0 = 0, length * np.sin(theta_rad)  # top of ramp
-    x1, y1 = length * np.cos(theta_rad), 0  # bottom of ramp
-
-    x_block = x0 + s * np.cos(theta_rad)
-    y_block = y0 - s * np.sin(theta_rad)
-
-    # ---- Animation Section ----
-    fig, ax = plt.subplots(figsize=(6,4))
-    ax.plot([x0, x1], [y0, y1], 'k-', lw=4, label="Ramp")
-    ax.set_xlim(-0.2 * length, x1 + 0.2 * length)
-    ax.set_ylim(-0.2 * length, y0 + 0.3 * length)
-    ax.set_xlabel("Horizontal (m)")
-    ax.set_ylabel("Vertical (m)")
-    ax.set_title("Block Sliding Down an Inclined Plane")
-    block, = ax.plot([], [], 'ro', markersize=14, label="Block")
-
-    # Draw ground
-    ax.plot([x0, x1, x1 + 0.2 * length], [y1, y1, y1], 'brown', lw=2)
-
-    def init():
-        block.set_data([], [])
-        return block,
-
-    def animate(i):
-        idx = min(i, len(x_block) - 1)
-        # Don't let the block go past the bottom of the ramp
-        if s[idx] >= length:
-            block.set_data([x1], [y1])
+    if st.button("Extract Physics Info"):
+        if problem.strip() == "":
+            st.warning("Please enter a problem first.")
         else:
-            block.set_data([x_block[idx]], [y_block[idx]])
-        return block,
+            with st.spinner("Analyzing with Gemini..."):
+                result = extract_physics_info(problem)
+                st.session_state["parsed_result"] = result  # Store for later use
+                st.subheader("Parsed Physics Setup")
+                st.json(result)
 
-    ani = FuncAnimation(fig, animate, frames=len(x_block), init_func=init, blit=True, interval=25)
+    # Load from session state (after user hits "Extract")
+    parsed = st.session_state.get("parsed_result", None)
 
-    tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix='.gif')
-    ani.save(tmpfile.name, writer='pillow')
-    plt.close(fig)
-
-    st.image(tmpfile.name, caption="Inclined Plane Animation", use_container_width=True)
-
-    # Plots for position/velocity vs time (optional)
-    with st.expander("View Position & Velocity vs Time Graphs"):
-        fig2, ax2 = plt.subplots()
-        ax2.plot(t, s, label="Position (m)")
-        ax2.plot(t, acceleration * t, label="Velocity (m/s)")
-        ax2.set_xlabel("Time (s)")
-        ax2.set_title("Motion on Inclined Plane")
-        ax2.grid(True)
-        ax2.legend()
-        st.pyplot(fig2)
-
-    with st.expander("View Calculations and Formulas"):
-        st.markdown(r"""
-        **Equations Used:**
-
-        - $F_{\parallel} = mg\sin(\theta)$  
-        - $F_N = mg\cos(\theta)$  
-        - $f_k = \mu mg\cos(\theta)$  
-        - $a = \frac{F_{\parallel} - f_k}{m}$  
-        - $v_f = \sqrt{2aL}$  
-        - $t = \frac{v_f}{a}$
-        """)
+    if parsed and "initial_velocity" in parsed and "angle" in parsed:
+        if st.button("Simulate This Problem"):
+            motion_type = parsed.get("motion_type", "").lower()
+            if motion_type == "projectile":
+                ProjectileMotion.app(data=parsed)
+            elif motion_type in ["free fall", "linear"]:
+                FreeFall.app(data=parsed)
+            elif motion_type == "inclined":
+                InclinedPlane.app(data=parsed)
+            else:
+                st.warning(f"Simulation for motion type '{motion_type}' not implemented.")
 
