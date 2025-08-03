@@ -11,12 +11,22 @@ def app(data=None):
 
     use_ai = data is not None
 
+    # Default values
+    angle = 30
+    mass = 1
+    mu = 0
+    length = 5
+    motion_type = ""
+    question_type = ""
+
     if use_ai:
         st.markdown("#### Using AI-extracted values:")
         angle = float(data.get("angle", 30))
         mass = float(data.get("mass", 1))
         mu = float(data.get("friction", 0))
-        length = float(data.get("length", 5))  # length of ramp
+        length = float(data.get("length", 5))
+        motion_type = str(data.get("motion_type", "")).lower()
+        question_type = str(data.get("question_type", "")).lower()
     else:
         mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0)
         angle = st.slider("Incline Angle (°)", 0.0, 90.0, 30.0)
@@ -40,6 +50,33 @@ def app(data=None):
     st.markdown(f"- **Acceleration:** `{acceleration:.2f} m/s²`")
     st.markdown(f"- **Final Velocity:** `{final_velocity:.2f} m/s`")
     st.markdown(f"- **Time to reach bottom:** `{time:.2f} s`")
+
+    # --- Step-by-step acceleration calculation if requested by question_type ---
+    if (
+        use_ai and
+        motion_type == "inclined" and
+        question_type in ["acceleration", "kinematics"]
+    ):
+        st.success(
+            f"""
+            **Step-by-step Acceleration Calculation:**
+
+            1. Calculate the force parallel to the ramp:  
+            $F_{{\\parallel}} = mg \\sin\\theta = {mass:.2f} \\times {g:.1f} \\times \\sin({angle:.1f}^\\circ) = {f_parallel:.2f}\\ \\text{{N}}$
+
+            2. Calculate the normal force:  
+            $F_N = mg \\cos\\theta = {mass:.2f} \\times {g:.1f} \\times \\cos({angle:.1f}^\\circ) = {f_normal:.2f}\\ \\text{{N}}$
+
+            3. Calculate the frictional force:  
+            $f_k = \\mu F_N = {mu:.2f} \\times {f_normal:.2f} = {f_friction:.2f}\\ \\text{{N}}$
+
+            4. Calculate the net force down the ramp:  
+            $F_{{\\text{{net}}}} = F_{{\\parallel}} - f_k = {f_parallel:.2f} - {f_friction:.2f} = {f_net:.2f}\\ \\text{{N}}$
+
+            5. Finally, calculate the acceleration:  
+            $a = \\frac{{F_{{\\text{{net}}}}}}{{m}} = \\frac{{{f_net:.2f}}}{{{mass:.2f}}} = {acceleration:.2f}\\ \\text{{m/s}}^2$
+            """
+        )
 
     # Kinematics
     t = np.linspace(0, time, 120) if time > 0 else np.array([0])
@@ -72,7 +109,6 @@ def app(data=None):
 
     def animate(i):
         idx = min(i, len(x_block) - 1)
-        # Don't let the block go past the bottom of the ramp
         if s[idx] >= length:
             block.set_data([x1], [y1])
         else:
