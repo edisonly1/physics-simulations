@@ -72,7 +72,7 @@ def app(data=None):
     ani.save(tmpfile.name, writer='pillow')
     plt.close(fig)
 
-    st.image(tmpfile.name, caption="Projectile Animation", use_column_width=True)
+    st.image(tmpfile.name, caption="Projectile Animation", use_container_width=True)
 
     # --- Results ---
     st.markdown("### Results")
