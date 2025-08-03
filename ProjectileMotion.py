@@ -16,8 +16,32 @@ def app(data=None):
 
     if data:
         st.markdown(f"**Initial Velocity:** {v0} m/s  \n**Angle:** {angle_deg}°  \n**Height:** {h0} m")
-        if question_type == "range":
-            st.success(f"AI determined the question type is *range*. The range is **{(v0 * np.cos(np.radians(angle_deg)) * ((v0 * np.sin(np.radians(angle_deg)) + np.sqrt((v0 * np.sin(np.radians(angle_deg)))**2 + 2 * 10.0 * h0)) / 10.0)):.2f} meters**.")
+        if question_type in ["range", "kinematics"]:
+            # Use variable names for clarity
+            theta = np.radians(angle_deg)
+            v0x = v0 * np.cos(theta)
+            v0y = v0 * np.sin(theta)
+            g = 10.0
+
+            sqrt_term = np.sqrt(v0y ** 2 + 2 * g * h0)
+            t_range = (v0y + sqrt_term) / g
+            range_val = v0x * t_range
+
+            st.success(
+                f"""
+                **Step-by-step Range Calculation:**
+
+                Range = $v_{{0x}} \\times t_{{\\text{{flight}}}}$
+
+                $v_{{0x}} = v_0 \\cos\\theta = {v0:.2f} \\times \\cos({angle_deg:.2f}^\\circ) = {v0x:.2f}$ m/s  
+                $v_{{0y}} = v_0 \\sin\\theta = {v0:.2f} \\times \\sin({angle_deg:.2f}^\\circ) = {v0y:.2f}$ m/s  
+
+                $t_{{\\text{{flight}}}} = \\frac{{v_{{0y}} + \\sqrt{{v_{{0y}}^2 + 2gh_0}}}}{{g}} = \\frac{{{v0y:.2f} + \\sqrt{{({v0y:.2f})^2 + 2 \\times {g:.1f} \\times {h0:.2f}}}}}{{{g:.1f}}} = {t_range:.2f}$ s
+
+                **Final range:**  
+                ${v0x:.2f} \\times {t_range:.2f} = {range_val:.2f}$ meters
+                """
+            )
     else:
         st.info("Adjust the sliders to see the projectile's flight.")
 
