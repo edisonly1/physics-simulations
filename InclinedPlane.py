@@ -234,7 +234,7 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
    block_center = np.array([xb, yb])
 
     # Gravity (down)
-    mg_len = mg*0.15
+    mg_len = mg*0.06
     mg_tip = (block_center[0], block_center[1] - mg_len)
     ax.arrow(*block_center, 0, -mg_len, head_width=0.13, head_length=0.18, fc='green', ec='green', lw=3, length_includes_head=True)
     ax.text(mg_tip[0], mg_tip[1] - 0.12, r"$mg$", color="green", fontsize=18, ha="center", va="top")
@@ -250,7 +250,7 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     # Parallel (down ramp)
     px = np.cos(theta)
     py = -np.sin(theta)
-    fp_len = fp*0.08
+    fp_len = fp*0.06
     fp_tip = (block_center[0] + px*fp_len, block_center[1] + py*fp_len)
     ax.arrow(*block_center, px*fp_len, py*fp_len, head_width=0.13, head_length=0.18, fc='red', ec='red', lw=3, length_includes_head=True)
     ax.text(fp_tip[0] + 0.04, fp_tip[1] - 0.04, r"$F_{\parallel}$", color="red", fontsize=18, ha="left", va="top")
@@ -269,3 +269,7 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     ax.set_title("Free-Body Diagram (FBD) for Block on Incline", fontsize=18, weight='bold')
     plt.tight_layout()
     st.pyplot(fig)
+    # Zoom in so labels/arrows are near the block
+    ax.set_xlim(block_center[0] - 2, block_center[0] + 2)
+    ax.set_ylim(block_center[1] - 2, block_center[1] + 2)
+
