@@ -11,7 +11,7 @@ def app(data=None):
 
     use_ai = data is not None
 
-    # Default values
+    # Set defaults in case some values are missing from AI extraction
     angle = 30
     mass = 1
     mu = 0
@@ -21,12 +21,45 @@ def app(data=None):
 
     if use_ai:
         st.markdown("#### Using AI-extracted values:")
-        angle = float(data.get("angle", 30))
-        mass = float(data.get("mass", 1))
-        mu = float(data.get("friction", 0))
-        length = float(data.get("length", 5))
+
+        # Angle and mass
+        try:
+            angle = float(data.get("angle", 30))
+        except Exception:
+            angle = 30
+
+        try:
+            mass = float(data.get("mass", 1))
+        except Exception:
+            mass = 1
+
+        # Friction: try coefficient, then type (frictionless, etc.)
+        mu = 0.0
+        fc = data.get("friction_coefficient")
+        ft = str(data.get("friction_type", "")).lower()
+        if fc is not None:
+            try:
+                mu = float(fc)
+            except Exception:
+                mu = 0.0
+        elif "frictionless" in ft:
+            mu = 0.0
+        elif "static" in ft or "kinetic" in ft:
+            mu = float(fc) if fc is not None else 0.2  # fallback
+
+        # Use 'distance' as ramp length if present, else default
+        try:
+            length = float(data.get("distance", 5) or 5)
+        except Exception:
+            length = 5
+
         motion_type = str(data.get("motion_type", "")).lower()
         question_type = str(data.get("question_type", "")).lower()
+
+        # Let user override ramp length if AI did not supply it
+        if not data.get("distance"):
+            length = st.slider("Ramp Length (m)", 0.1, 20.0, 5.0)
+
     else:
         mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0)
         angle = st.slider("Incline Angle (°)", 0.0, 90.0, 30.0)
