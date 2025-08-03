@@ -25,6 +25,9 @@ def app(data=None):
 
     theta_rad = np.radians(angle)
 
+    # Height of the ramp at the top (vertical component)
+    ramp_height = length * np.sin(theta_rad)
+
     # Forces & kinematics
     f_parallel = mass * g * np.sin(theta_rad)
     f_normal = mass * g * np.cos(theta_rad)
@@ -42,24 +45,23 @@ def app(data=None):
 
     # Kinematics for animation
     t = np.linspace(0, time, 120) if time > 0 else np.array([0])
-    s = 0.5 * acceleration * t**2
+    s = 0.5 * acceleration * t**2  # distance along the ramp
 
-    # Ramp coordinates (top at (0,0), bottom at (x_ramp, y_ramp))
-    x_ramp = length * np.cos(theta_rad)
-    y_ramp = length * np.sin(theta_rad)
-
-    # --- Animation block: start at top and slide to bottom ---
-    # Block starts at (0,0) and moves to (x_ramp, y_ramp)
+    # Block coordinates: moves from (0, ramp_height) to (length, 0)
     x_block = s * np.cos(theta_rad)
-    y_block = s * np.sin(theta_rad)
+    y_block = ramp_height - s * np.sin(theta_rad)
 
-    fig, ax = plt.subplots(figsize=(6,4))
-    # Draw ramp
-    ax.plot([0, x_ramp], [0, y_ramp], 'k-', lw=4, label="Ramp")
+    # Clamp block to ramp end
+    x_block = np.clip(x_block, 0, length)
+    y_block = np.clip(y_block, 0, ramp_height)
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    # Draw ramp from (0, ramp_height) to (length, 0)
+    ax.plot([0, length], [ramp_height, 0], 'k-', lw=4, label="Ramp")
     # Draw ground
-    ax.plot([0, x_ramp + 0.2 * length], [0, 0], 'brown', lw=2)
-    ax.set_xlim(-0.2 * length, x_ramp + 0.3 * length)
-    ax.set_ylim(-0.2 * length, y_ramp + 0.4 * length)
+    ax.plot([0, length + 0.2 * length], [0, 0], 'brown', lw=2)
+    ax.set_xlim(-0.2 * length, length + 0.3 * length)
+    ax.set_ylim(-0.2 * length, ramp_height + 0.4 * length)
     ax.set_xlabel("Horizontal (m)")
     ax.set_ylabel("Vertical (m)")
     ax.set_title("Block Sliding Down an Inclined Plane")
