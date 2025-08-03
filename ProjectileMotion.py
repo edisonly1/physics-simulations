@@ -35,16 +35,14 @@ def app(data=None):
     x_vals = vx * t_vals
     y_vals = h0 + vy * t_vals - 0.5 * g * t_vals**2
 
-    # Check for valid animation
     n_frames = min(len(x_vals), len(y_vals))
-    if n_frames < 2 or np.all(y_vals <= 0):
+    if n_frames < 2 or np.all(y_vals <= 0) or np.any(np.isnan(x_vals)) or np.any(np.isnan(y_vals)):
         st.warning("No valid trajectory to animate. Try changing the parameters.")
         return
 
-    # --- Animation Block ---
     fig, ax = plt.subplots()
-    ax.set_xlim(0, np.max(x_vals) * 1.05)
-    ax.set_ylim(0, max(np.max(y_vals) * 1.05, 1))
+    ax.set_xlim(0, max(np.max(x_vals)*1.05, 1))
+    ax.set_ylim(0, max(np.max(y_vals)*1.05, 1))
     ax.set_xlabel("Distance (m)")
     ax.set_ylabel("Height (m)")
     ax.set_title("Projectile Path (Animated)")
@@ -59,11 +57,15 @@ def app(data=None):
 
     def animate(i):
         idx = min(i, n_frames - 1)
+        # Defensive: ensure idx is in range
+        if idx < 0 or idx >= n_frames:
+            return line, point
         line.set_data(x_vals[:idx + 1], y_vals[:idx + 1])
-        point.set_data(x_vals[idx], y_vals[idx])
+        point.set_data(x_vals[idx:idx + 1], y_vals[idx:idx + 1])
         return line, point
 
     ani = FuncAnimation(fig, animate, frames=n_frames, init_func=init, blit=True, interval=20)
+
 
     # Save animation to a temp GIF
     tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix='.gif')
