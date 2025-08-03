@@ -9,7 +9,7 @@ st.sidebar.title("Physics Simulation Lab")
 page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser"])
 
 # Page Routing
-#if page == "Home":
+if page == "Home":
     st.title("Welcome to the Physics Simulation Lab!")
     st.markdown("""
     This tool is designed to help visualize AP Physics 1 problems.
