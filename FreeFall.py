@@ -14,6 +14,29 @@ def app(data=None):
         st.markdown("#### Using AI-extracted values:")
         st.markdown(f"- **Initial Height:** `{h0} m`")
         st.markdown(f"- **Initial Velocity:** `{v0} m/s`")
+        question_type = data.get("question_type", "").lower()
+        if question_type in ["time", "kinematics"]:
+        g = 10.0
+        h_display = float(data.get("height", 0))
+        v0_display = float(data.get("initial_velocity", 0))
+        sqrt_term = np.sqrt(v0_display ** 2 + 2 * g * h_display)
+        t_fall_display = (-v0_display + sqrt_term) / g if g != 0 else 0
+
+        st.success(
+            f"""
+            **Step-by-step Free Fall Time Calculation:**
+
+            $$
+            t_{{\\text{{fall}}}} = \\frac{{-v_0 + \\sqrt{{v_0^2 + 2gh_0}}}}{{g}}
+            $$
+
+            Plug in the values:
+
+            $$
+            t_{{\\text{{fall}}}} = \\frac{{-{v0_display:.2f} + \\sqrt{{({v0_display:.2f})^2 + 2 \\times {g:.1f} \\times {h_display:.2f}}}}}{{{g:.1f}}} = {t_fall_display:.2f}~\\text{{seconds}}
+            $$
+            """
+        )
     else:
         h0 = st.slider("Initial Height (m)", 0.0, 100.0, 10.0)
         v0 = st.slider("Initial Velocity (m/s)", -20.0, 20.0, 0.0)  # allow negative (upwards)
