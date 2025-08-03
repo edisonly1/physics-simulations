@@ -36,7 +36,8 @@ def app(data=None):
     y_vals = h0 + vy * t_vals - 0.5 * g * t_vals**2
 
     # Check for valid animation
-    if len(x_vals) < 2 or np.all(y_vals <= 0):
+    n_frames = min(len(x_vals), len(y_vals))
+    if n_frames < 2 or np.all(y_vals <= 0):
         st.warning("No valid trajectory to animate. Try changing the parameters.")
         return
 
@@ -57,11 +58,12 @@ def app(data=None):
         return line, point
 
     def animate(i):
-        line.set_data(x_vals[:i + 1], y_vals[:i + 1])
-        point.set_data(x_vals[i], y_vals[i])
+        idx = min(i, n_frames - 1)
+        line.set_data(x_vals[:idx + 1], y_vals[:idx + 1])
+        point.set_data(x_vals[idx], y_vals[idx])
         return line, point
 
-    ani = FuncAnimation(fig, animate, frames=len(t_vals), init_func=init, blit=True, interval=20)
+    ani = FuncAnimation(fig, animate, frames=n_frames, init_func=init, blit=True, interval=20)
 
     # Save animation to a temp GIF
     tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix='.gif')
@@ -85,3 +87,4 @@ def app(data=None):
         - Horizontal distance:  $x(t) = v_x \cdot t$  
         - Vertical position:    $y(t) = h + v_y t - \frac{1}{2} g t^2$  
         """)
+
