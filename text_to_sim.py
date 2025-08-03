@@ -15,7 +15,8 @@ Extract only the physics parameters from this word problem and return them as a 
 
 {{
   "object": "...",
-  "motion_type": "...",
+  "motion_type": "...",  # e.g. 'projectile', 'free fall', 'inclined'
+  "question_type": "...", # e.g. 'acceleration', 'range', 'time', etc.
   "mass": null,
   "initial_velocity": null,
   "angle": null,
