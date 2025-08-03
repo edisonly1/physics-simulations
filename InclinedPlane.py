@@ -130,7 +130,8 @@ def app(data=None):
     st.image(tmpfile.name, caption="Inclined Plane Animation", use_container_width=True)
 
     # Show FBD and step-by-step if requested by AI
-    if use_ai and data.get("diagram_requested", False):
+    if use_ai:
+        st.write("Diagram requested?", data.get("diagram_requested", False))
         with st.expander("Free-Body Diagram (FBD) for this scenario"):
             draw_incline_fbd(angle, mass, mu, length, show_friction=mu > 0)
         with st.expander("Step-by-step Acceleration Calculation"):
