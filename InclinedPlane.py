@@ -40,28 +40,30 @@ def app(data=None):
     st.markdown(f"- **Final Velocity:** `{final_velocity:.2f} m/s`")
     st.markdown(f"- **Time to reach bottom:** `{time:.2f} s`")
 
-    # Kinematics
+    # Kinematics for animation
     t = np.linspace(0, time, 120) if time > 0 else np.array([0])
     s = 0.5 * acceleration * t**2
 
-    # Coordinates: Ramp goes from (0,0) to (x_ramp, y_ramp)
+    # Ramp coordinates (top at (0,0), bottom at (x_ramp, y_ramp))
     x_ramp = length * np.cos(theta_rad)
     y_ramp = length * np.sin(theta_rad)
+
+    # --- Animation block: start at top and slide to bottom ---
+    # Block starts at (0,0) and moves to (x_ramp, y_ramp)
     x_block = s * np.cos(theta_rad)
     y_block = s * np.sin(theta_rad)
 
-    # ---- Animation Section ----
     fig, ax = plt.subplots(figsize=(6,4))
+    # Draw ramp
     ax.plot([0, x_ramp], [0, y_ramp], 'k-', lw=4, label="Ramp")
-    ax.set_xlim(-0.2 * length, x_ramp + 0.2 * length)
-    ax.set_ylim(-0.2 * length, y_ramp + 0.3 * length)
+    # Draw ground
+    ax.plot([0, x_ramp + 0.2 * length], [0, 0], 'brown', lw=2)
+    ax.set_xlim(-0.2 * length, x_ramp + 0.3 * length)
+    ax.set_ylim(-0.2 * length, y_ramp + 0.4 * length)
     ax.set_xlabel("Horizontal (m)")
     ax.set_ylabel("Vertical (m)")
     ax.set_title("Block Sliding Down an Inclined Plane")
     block, = ax.plot([], [], 'ro', markersize=14, label="Block")
-
-    # Draw ground
-    ax.plot([0, x_ramp, x_ramp + 0.2 * length], [0, 0, 0], 'brown', lw=2)
 
     def init():
         block.set_data([], [])
@@ -102,3 +104,4 @@ def app(data=None):
         - $v_f = \sqrt{2aL}$  
         - $t = \frac{v_f}{a}$
         """)
+
