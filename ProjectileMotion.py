@@ -2,111 +2,140 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.patches import FancyArrowPatch
 import tempfile
 
 def app(data=None):
-    st.title("Inclined Plane Simulator (Animated)")
+    st.title("Animated Projectile Motion Simulator")
 
-    g = 10.0  # gravity
+    # --- Input Handling ---
+    v0 = float(data.get("initial_velocity", 20)) if data else st.slider("Initial Velocity (m/s)", 0.0, 50.0, 25.0, step=0.1)
+    angle_deg = float(data.get("angle", 45)) if data else st.slider("Launch Angle (degrees)", 0.0, 90.0, 45.0, step=0.1)
+    h0 = float(data.get("height", 0)) if data else st.slider("Initial Height (m)", 0.0, 10.0, 0.0, step=0.1)
+    question_type = data.get("question_type", "").lower() if data else ""
 
-    use_ai = data is not None
+    if data:
+        st.markdown(f"**Initial Velocity:** {v0} m/s  \n**Angle:** {angle_deg}°  \n**Height:** {h0} m")
+        if question_type in ["range", "kinematics"]:
+            # Use variable names for clarity
+            theta = np.radians(angle_deg)
+            v0x = v0 * np.cos(theta)
+            v0y = v0 * np.sin(theta)
+            g = 10.0
 
-    if use_ai:
-        st.markdown("#### Using AI-extracted values:")
-        angle = float(data.get("angle", 30))
-        mass = float(data.get("mass", 1))
-        mu = float(data.get("friction", 0))
-        length = float(data.get("length", 5))  # length of ramp
+            sqrt_term = np.sqrt(v0y ** 2 + 2 * g * h0)
+            t_range = (v0y + sqrt_term) / g
+            range_val = v0x * t_range
+
+            st.success(
+                f"""
+                **Step-by-step Range Calculation:**
+
+                Range = $v_{{0x}} \\times t_{{\\text{{flight}}}}$
+
+                $v_{{0x}} = v_0 \\cos\\theta = {v0:.2f} \\times \\cos({angle_deg:.2f}^\\circ) = {v0x:.2f}$ m/s  
+                $v_{{0y}} = v_0 \\sin\\theta = {v0:.2f} \\times \\sin({angle_deg:.2f}^\\circ) = {v0y:.2f}$ m/s  
+
+                $t_{{\\text{{flight}}}} = \\frac{{v_{{0y}} + \\sqrt{{v_{{0y}}^2 + 2gh_0}}}}{{g}} = \\frac{{{v0y:.2f} + \\sqrt{{({v0y:.2f})^2 + 2 \\times {g:.1f} \\times {h0:.2f}}}}}{{{g:.1f}}} = {t_range:.2f}$ s
+
+                **Final range:**  
+                ${v0x:.2f} \\times {t_range:.2f} = {range_val:.2f}$ meters
+                """
+            )
     else:
-        mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0)
-        angle = st.slider("Incline Angle (°)", 0.0, 90.0, 30.0)
-        mu = st.slider("Friction Coefficient (μ)", 0.0, 1.0, 0.0)
-        length = st.slider("Ramp Length (m)", 0.1, 20.0, 5.0)
+        st.info("Adjust the sliders to see the projectile's flight.")
 
-    theta_rad = np.radians(angle)
+    # --- Physics Calculation ---
+    g = 10.0
+    theta = np.radians(angle_deg)
+    vx = v0 * np.cos(theta)
+    vy = v0 * np.sin(theta)
+    discrim = vy**2 + 2 * g * h0
+    t_flight = (vy + np.sqrt(discrim)) / g if discrim >= 0 else 0
 
-    # Forces & kinematics
-    f_parallel = mass * g * np.sin(theta_rad)
-    f_normal = mass * g * np.cos(theta_rad)
-    f_friction = mu * f_normal
-    f_net = f_parallel - f_friction
-    acceleration = f_net / mass
+    if t_flight <= 0 or (v0 == 0 and h0 == 0):
+        st.warning("The object does not move. Please check your initial conditions.")
+        return
 
-    # Final velocity: v² = 2aL
-    final_velocity = np.sqrt(2 * acceleration * length) if acceleration > 0 else 0
-    time = final_velocity / acceleration if acceleration > 0 else 0
+    t_vals = np.linspace(0, t_flight, 180)
+    x_vals = vx * t_vals
+    y_vals = h0 + vy * t_vals - 0.5 * g * t_vals**2
 
-    st.markdown("### Results")
-    st.markdown(f"- **Acceleration:** `{acceleration:.2f} m/s²`")
-    st.markdown(f"- **Final Velocity:** `{final_velocity:.2f} m/s`")
-    st.markdown(f"- **Time to reach bottom:** `{time:.2f} s`")
+    n_frames = min(len(x_vals), len(y_vals))
+    if n_frames < 2 or np.all(y_vals <= 0) or np.any(np.isnan(x_vals)) or np.any(np.isnan(y_vals)):
+        st.warning("No valid trajectory to animate. Try changing the parameters.")
+        return
 
-    # Kinematics
-    t = np.linspace(0, time, 120) if time > 0 else np.array([0])
-    s = 0.5 * acceleration * t**2
-    s = np.clip(s, 0, length)  # <-- Clamp block position to ramp length
+    fig, ax = plt.subplots()
+    ax.set_xlim(0, max(np.max(x_vals) * 1.05, 1))
+    ax.set_ylim(0, max(np.max(y_vals) * 1.05, 1))
+    ax.set_xlabel("Distance (m)")
+    ax.set_ylabel("Height (m)")
+    ax.set_title("Projectile Path (Animated)")
 
-    # Ramp geometry: always top-left (start) to bottom-right (end)
-    x0, y0 = 0, length * np.sin(theta_rad)  # top of ramp
-    x1, y1 = length * np.cos(theta_rad), 0  # bottom of ramp
+    # Static background trajectory
+    ax.plot(x_vals, y_vals, '--', color='lightgray', label="Full Trajectory")
 
-    x_block = x0 + s * np.cos(theta_rad)
-    y_block = y0 - s * np.sin(theta_rad)
-
-    # ---- Animation Section ----
-    fig, ax = plt.subplots(figsize=(6,4))
-    ax.plot([x0, x1], [y0, y1], 'k-', lw=4, label="Ramp")
-    ax.set_xlim(-0.2 * length, x1 + 0.2 * length)
-    ax.set_ylim(-0.2 * length, y0 + 0.3 * length)
-    ax.set_xlabel("Horizontal (m)")
-    ax.set_ylabel("Vertical (m)")
-    ax.set_title("Block Sliding Down an Inclined Plane")
-    block, = ax.plot([], [], 'ro', markersize=14, label="Block")
-
-    # Draw ground
-    ax.plot([x0, x1, x1 + 0.2 * length], [y1, y1, y1], 'brown', lw=2)
+    line, = ax.plot([], [], 'b-', lw=2, label="Path So Far")
+    point, = ax.plot([], [], 'ro', markersize=8, label="Ball")
+    arrow = [None]  # To update velocity vector
 
     def init():
-        block.set_data([], [])
-        return block,
+        line.set_data([], [])
+        point.set_data([], [])
+        return line, point
 
     def animate(i):
-        idx = min(i, len(x_block) - 1)
-        # Don't let the block go past the bottom of the ramp
-        if s[idx] >= length:
-            block.set_data([x1], [y1])
-        else:
-            block.set_data([x_block[idx]], [y_block[idx]])
-        return block,
+        idx = min(i, n_frames - 1)
+        t = t_vals[idx]
 
-    ani = FuncAnimation(fig, animate, frames=len(x_block), init_func=init, blit=True, interval=25)
+        # Path trail up to current frame
+        line.set_data(x_vals[:idx + 1], y_vals[:idx + 1])
+        # Current position of the ball
+        point.set_data(x_vals[idx:idx + 1], y_vals[idx:idx + 1])
+
+        # Remove the previous arrow, if any
+        if arrow[0] is not None:
+            try:
+                arrow[0].remove()
+            except Exception:
+                pass
+
+        # Instantaneous velocity
+        vx_i = vx
+        vy_i = vy - g * t
+        scale = 0.2 * np.sqrt(vx_i**2 + vy_i**2)  # Scaling for visual clarity
+
+        # Add velocity arrow
+        arrow[0] = FancyArrowPatch(
+            (x_vals[idx], y_vals[idx]),
+            (x_vals[idx] + scale * vx_i / (np.sqrt(vx_i**2 + vy_i**2) + 1e-6), 
+             y_vals[idx] + scale * vy_i / (np.sqrt(vx_i**2 + vy_i**2) + 1e-6)),
+            color='green', arrowstyle='->', mutation_scale=20, linewidth=2
+        )
+        ax.add_patch(arrow[0])
+        return line, point, arrow[0]
+
+    ani = FuncAnimation(fig, animate, frames=n_frames, init_func=init, blit=True, interval=20)
 
     tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix='.gif')
     ani.save(tmpfile.name, writer='pillow')
     plt.close(fig)
 
-    st.image(tmpfile.name, caption="Inclined Plane Animation", use_container_width=True)
+    st.image(tmpfile.name, caption="Projectile Animation", use_container_width=True)
 
-    # Plots for position/velocity vs time (optional)
-    with st.expander("View Position & Velocity vs Time Graphs"):
-        fig2, ax2 = plt.subplots()
-        ax2.plot(t, s, label="Position (m)")
-        ax2.plot(t, acceleration * t, label="Velocity (m/s)")
-        ax2.set_xlabel("Time (s)")
-        ax2.set_title("Motion on Inclined Plane")
-        ax2.grid(True)
-        ax2.legend()
-        st.pyplot(fig2)
+    # --- Results ---
+    st.markdown("### Results")
+    st.markdown(f"- **Time of Flight:** `{t_flight:.2f}` seconds")
+    st.markdown(f"- **Horizontal Range:** `{x_vals[-1]:.2f}` meters")
 
     with st.expander("View Calculations and Formulas"):
         st.markdown(r"""
         **Equations Used:**
 
-        - $F_{\parallel} = mg\sin(\theta)$  
-        - $F_N = mg\cos(\theta)$  
-        - $f_k = \mu mg\cos(\theta)$  
-        - $a = \frac{F_{\parallel} - f_k}{m}$  
-        - $v_f = \sqrt{2aL}$  
-        - $t = \frac{v_f}{a}$
+        - Horizontal velocity:  $v_x = v_0 \cos(\theta)$  
+        - Vertical velocity:    $v_y = v_0 \sin(\theta)$  
+        - Time of flight:       $t = \frac{v_y + \sqrt{v_y^2 + 2gh}}{g}$  
+        - Horizontal distance:  $x(t) = v_x \cdot t$  
+        - Vertical position:    $y(t) = h + v_y t - \frac{1}{2} g t^2$  
         """)
-
