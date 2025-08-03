@@ -50,7 +50,7 @@ Extract only the physics parameters from this word problem and return them as a 
   "resistance": null,
   "other_objects": [],
   "constraints": "",
-  "diagram_requested": true,
+  "free_body_diagram": true,
   "notes": ""
 }}
 Only output the JSON object. Do not include code fences, explanations, or extra text.
