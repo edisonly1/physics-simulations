@@ -25,9 +25,6 @@ def app(data=None):
 
     theta_rad = np.radians(angle)
 
-    # Height of the ramp at the top (vertical component)
-    ramp_height = length * np.sin(theta_rad)
-
     # Forces & kinematics
     f_parallel = mass * g * np.sin(theta_rad)
     f_normal = mass * g * np.cos(theta_rad)
@@ -35,6 +32,7 @@ def app(data=None):
     f_net = f_parallel - f_friction
     acceleration = f_net / mass
 
+    # Final velocity: v² = 2aL
     final_velocity = np.sqrt(2 * acceleration * length) if acceleration > 0 else 0
     time = final_velocity / acceleration if acceleration > 0 else 0
 
@@ -43,29 +41,30 @@ def app(data=None):
     st.markdown(f"- **Final Velocity:** `{final_velocity:.2f} m/s`")
     st.markdown(f"- **Time to reach bottom:** `{time:.2f} s`")
 
-    # Kinematics for animation
+    # Kinematics
     t = np.linspace(0, time, 120) if time > 0 else np.array([0])
-    s = 0.5 * acceleration * t**2  # distance along the ramp
+    s = 0.5 * acceleration * t**2
+    s = np.clip(s, 0, length)  # <-- Clamp block position to ramp length
 
-    # Block coordinates: moves from (0, ramp_height) to (length, 0)
-    x_block = s * np.cos(theta_rad)
-    y_block = ramp_height - s * np.sin(theta_rad)
+    # Ramp geometry: always top-left (start) to bottom-right (end)
+    x0, y0 = 0, length * np.sin(theta_rad)  # top of ramp
+    x1, y1 = length * np.cos(theta_rad), 0  # bottom of ramp
 
-    # Clamp block to ramp end
-    x_block = np.clip(x_block, 0, length)
-    y_block = np.clip(y_block, 0, ramp_height)
+    x_block = x0 + s * np.cos(theta_rad)
+    y_block = y0 - s * np.sin(theta_rad)
 
-    fig, ax = plt.subplots(figsize=(6, 4))
-    # Draw ramp from (0, ramp_height) to (length, 0)
-    ax.plot([0, length], [ramp_height, 0], 'k-', lw=4, label="Ramp")
-    # Draw ground
-    ax.plot([0, length + 0.2 * length], [0, 0], 'brown', lw=2)
-    ax.set_xlim(-0.2 * length, length + 0.3 * length)
-    ax.set_ylim(-0.2 * length, ramp_height + 0.4 * length)
+    # ---- Animation Section ----
+    fig, ax = plt.subplots(figsize=(6,4))
+    ax.plot([x0, x1], [y0, y1], 'k-', lw=4, label="Ramp")
+    ax.set_xlim(-0.2 * length, x1 + 0.2 * length)
+    ax.set_ylim(-0.2 * length, y0 + 0.3 * length)
     ax.set_xlabel("Horizontal (m)")
     ax.set_ylabel("Vertical (m)")
     ax.set_title("Block Sliding Down an Inclined Plane")
     block, = ax.plot([], [], 'ro', markersize=14, label="Block")
+
+    # Draw ground
+    ax.plot([x0, x1, x1 + 0.2 * length], [y1, y1, y1], 'brown', lw=2)
 
     def init():
         block.set_data([], [])
@@ -73,7 +72,11 @@ def app(data=None):
 
     def animate(i):
         idx = min(i, len(x_block) - 1)
-        block.set_data([x_block[idx]], [y_block[idx]])
+        # Don't let the block go past the bottom of the ramp
+        if s[idx] >= length:
+            block.set_data([x1], [y1])
+        else:
+            block.set_data([x_block[idx]], [y_block[idx]])
         return block,
 
     ani = FuncAnimation(fig, animate, frames=len(x_block), init_func=init, blit=True, interval=25)
