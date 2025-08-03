@@ -51,74 +51,10 @@ def app(data=None):
     st.markdown(f"- **Final Velocity:** `{final_velocity:.2f} m/s`")
     st.markdown(f"- **Time to reach bottom:** `{time:.2f} s`")
 
-    if use_ai and motion_type == "inclined" and question_type in ["acceleration", "forces"]:
-        st.markdown("#### Free-Body Diagram (FBD) for the Block on the Incline:")
-
-        fig_fbd, ax_fbd = plt.subplots(figsize=(4, 4))
-        # Draw ramp (from (0,0) to (Lx, Ly))
-        L = 2.0  # short ramp for FBD clarity
-        ramp_x = [0, L * np.cos(theta_rad)]
-        ramp_y = [0, L * np.sin(theta_rad)]
-        ax_fbd.plot(ramp_x, ramp_y, 'k-', lw=3)
-        # Block at middle
-        block_center_x = L * 0.5 * np.cos(theta_rad)
-        block_center_y = L * 0.5 * np.sin(theta_rad)
-        ax_fbd.plot(block_center_x, block_center_y, 's', color='tab:blue', markersize=18)
-        # Draw gravity (down)
-        ax_fbd.arrow(block_center_x, block_center_y, 0, -0.7, head_width=0.07, head_length=0.1, fc='g', ec='g', lw=2)
-        ax_fbd.text(block_center_x-0.1, block_center_y-0.5, r'$\vec{mg}$', fontsize=12, color='g')
-        # Draw normal (perpendicular to ramp, up from block)
-        n_dx = 0.5 * np.sin(theta_rad)
-        n_dy = 0.5 * np.cos(theta_rad)
-        ax_fbd.arrow(block_center_x, block_center_y, n_dx, n_dy, head_width=0.07, head_length=0.1, fc='orange', ec='orange', lw=2)
-        ax_fbd.text(block_center_x + n_dx + 0.05, block_center_y + n_dy + 0.05, r'$\vec{N}$', fontsize=12, color='orange')
-        # Draw friction (left along ramp if present)
-        if mu > 0:
-            f_dx = -0.5 * np.cos(theta_rad)
-            f_dy = 0.5 * np.sin(theta_rad)
-            ax_fbd.arrow(block_center_x, block_center_y, f_dx, f_dy, head_width=0.07, head_length=0.1, fc='brown', ec='brown', lw=2)
-            ax_fbd.text(block_center_x + f_dx - 0.1, block_center_y + f_dy + 0.05, r'$\vec{f}_k$', fontsize=12, color='brown')
-        # Draw parallel force (down ramp)
-        par_dx = 0.6 * np.cos(theta_rad)
-        par_dy = 0.6 * np.sin(theta_rad)
-        ax_fbd.arrow(block_center_x, block_center_y, par_dx, par_dy, head_width=0.07, head_length=0.1, fc='r', ec='r', lw=2)
-        ax_fbd.text(block_center_x + par_dx + 0.05, block_center_y + par_dy - 0.05, r'$\vec{F}_{\parallel}$', fontsize=12, color='r')
-        ax_fbd.set_xlim(-0.7, 1.7)
-        ax_fbd.set_ylim(-0.7, 1.7)
-        ax_fbd.axis('off')
-        st.pyplot(fig_fbd)
-
-    # Step-by-step acceleration calculation
-    if (
-        use_ai and
-        motion_type == "inclined" and
-        question_type in ["acceleration", "kinematics"]
-    ):
-        st.success(
-            f"""
-            **Step-by-step Acceleration Calculation:**
-
-            1. Calculate the force parallel to the ramp:  
-            $F_{{\\parallel}} = mg \\sin\\theta = {mass:.2f} \\times {g:.1f} \\times \\sin({angle:.1f}^\\circ) = {f_parallel:.2f}\\ \\text{{N}}$
-
-            2. Calculate the normal force:  
-            $F_N = mg \\cos\\theta = {mass:.2f} \\times {g:.1f} \\times \\cos({angle:.1f}^\\circ) = {f_normal:.2f}\\ \\text{{N}}$
-
-            3. Calculate the frictional force:  
-            $f_k = \\mu F_N = {mu:.2f} \\times {f_normal:.2f} = {f_friction:.2f}\\ \\text{{N}}$
-
-            4. Calculate the net force down the ramp:  
-            $F_{{\\text{{net}}}} = F_{{\\parallel}} - f_k = {f_parallel:.2f} - {f_friction:.2f} = {f_net:.2f}\\ \\text{{N}}$
-
-            5. Finally, calculate the acceleration:  
-            $a = \\frac{{F_{{\\text{{net}}}}}}{{m}} = \\frac{{{f_net:.2f}}}{{{mass:.2f}}} = {acceleration:.2f}\\ \\text{{m/s}}^2$
-            """
-        )
-
     # Kinematics
     t = np.linspace(0, time, 120) if time > 0 else np.array([0])
     s = 0.5 * acceleration * t**2
-    s = np.clip(s, 0, length)  # <-- Clamp block position to ramp length
+    s = np.clip(s, 0, length)  # Clamp block position to ramp length
 
     # Ramp geometry: always top-left (start) to bottom-right (end)
     x0, y0 = 0, length * np.sin(theta_rad)  # top of ramp
@@ -160,6 +96,43 @@ def app(data=None):
 
     st.image(tmpfile.name, caption="Inclined Plane Animation", use_container_width=True)
 
+    # Show FBD and step-by-step if requested by AI
+    if use_ai and motion_type == "inclined" and question_type in ["acceleration", "forces"]:
+        with st.expander("Free-Body Diagram (FBD) for this scenario"):
+            draw_incline_fbd(angle, mass, mu, length, show_friction=mu > 0)
+        with st.expander("Step-by-step Acceleration Calculation"):
+            st.markdown(f"""
+**1. Calculate the force parallel to the ramp:**
+
+$$
+F_{{||}} = mg\\sin\\theta = {mass:.2f} \\times {g:.1f} \\times \\sin({angle:.1f}^\\circ) = {f_parallel:.2f}\\ \\text{{N}}
+$$
+
+**2. Calculate the normal force:**
+
+$$
+F_N = mg\\cos\\theta = {mass:.2f} \\times {g:.1f} \\times \\cos({angle:.1f}^\\circ) = {f_normal:.2f}\\ \\text{{N}}
+$$
+
+**3. Calculate the frictional force:**
+
+$$
+f_k = \\mu F_N = {mu:.2f} \\times {f_normal:.2f} = {f_friction:.2f}\\ \\text{{N}}
+$$
+
+**4. Calculate the net force down the ramp:**
+
+$$
+F_{{net}} = F_{{||}} - f_k = {f_parallel:.2f} - {f_friction:.2f} = {f_net:.2f}\\ \\text{{N}}
+$$
+
+**5. Finally, calculate the acceleration:**
+
+$$
+a = \\frac{{F_{{net}}}}{{m}} = \\frac{{{f_net:.2f}}}{{{mass:.2f}}} = {acceleration:.2f}\\ \\text{{m/s}}^2
+$$
+""")
+
     # Plots for position/velocity vs time
     with st.expander("View Position & Velocity vs Time Graphs"):
         fig2, ax2 = plt.subplots()
@@ -183,3 +156,71 @@ def app(data=None):
         - $t = \frac{v_f}{a}$
         """)
 
+
+def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
+    g = 10.0
+    theta = np.radians(angle_deg)
+    # Ramp: top-left to bottom-right
+    x0, y0 = 0, length * np.sin(theta)
+    x1, y1 = length, 0
+
+    # Block position (1/3 along ramp)
+    frac = 1/3
+    xb = x0 + frac * (x1 - x0)
+    yb = y0 + frac * (y1 - y0)
+    block_size = 0.3
+
+    # Block (rotated square)
+    block_angle = -theta
+    block = np.array([
+        [-block_size/2, -block_size/2],
+        [ block_size/2, -block_size/2],
+        [ block_size/2,  block_size/2],
+        [-block_size/2,  block_size/2],
+        [-block_size/2, -block_size/2]
+    ])
+    rot = np.array([
+        [np.cos(block_angle), -np.sin(block_angle)],
+        [np.sin(block_angle),  np.cos(block_angle)]
+    ])
+    block_rot = block @ rot.T + [xb, yb]
+
+    # Forces
+    mg = mass * g
+    fn = mg * np.cos(theta)
+    fp = mg * np.sin(theta)
+    f_friction = mu * fn if show_friction and mu > 0 else 0
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.plot([x0, x1], [y0, y1], color="k", lw=4)
+    ax.plot([x1 - 1, x1 + 1], [y1, y1], color="brown", lw=2)
+    ax.plot(block_rot[:, 0], block_rot[:, 1], color="royalblue", lw=2)
+    ax.fill(block_rot[:, 0], block_rot[:, 1], "royalblue", alpha=0.7)
+
+    block_center = np.array([xb, yb])
+    # Gravity (down)
+    ax.arrow(*block_center, 0, -mg*0.15, head_width=0.13, head_length=0.18, fc='green', ec='green', lw=3, length_includes_head=True)
+    ax.text(block_center[0], block_center[1] - mg*0.18 - 0.2, r"$mg$", color="green", fontsize=18)
+    # Normal (perpendicular)
+    nx = np.sin(theta)
+    ny = np.cos(theta)
+    ax.arrow(*block_center, nx*fn*0.06, ny*fn*0.06, head_width=0.13, head_length=0.18, fc='orange', ec='orange', lw=3, length_includes_head=True)
+    ax.text(block_center[0] + nx*fn*0.09 + 0.12, block_center[1] + ny*fn*0.09, r"$N$", color="orange", fontsize=18)
+    # Parallel (down ramp)
+    px = np.cos(theta)
+    py = -np.sin(theta)
+    ax.arrow(*block_center, px*fp*0.08, py*fp*0.08, head_width=0.13, head_length=0.18, fc='red', ec='red', lw=3, length_includes_head=True)
+    ax.text(block_center[0] + px*fp*0.11, block_center[1] + py*fp*0.11 - 0.1, r"$F_{\parallel}$", color="red", fontsize=18)
+    # Friction (if present, up the ramp)
+    if show_friction and mu > 0:
+        ax.arrow(*block_center, -px*f_friction*0.06, -py*f_friction*0.06, head_width=0.13, head_length=0.18, fc='brown', ec='brown', lw=3, length_includes_head=True)
+        ax.text(block_center[0] - px*f_friction*0.09, block_center[1] - py*f_friction*0.09 + 0.1, r"$f_k$", color="brown", fontsize=18)
+
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_xlim(-length*0.2, length*1.2)
+    ax.set_ylim(-length*0.5, y0 + block_size*2)
+    ax.set_title("Free-Body Diagram (FBD) for Block on Incline", fontsize=18, weight='bold')
+    plt.tight_layout()
+    st.pyplot(fig)
