@@ -20,7 +20,7 @@ def app(data=None):
     question_type = ""
 
     if use_ai:
-        st.markdown("#### Using AI-extracted values:")
+        st.markdown("#### Using AI-extracted values:"):
 
         # Angle and mass
         try:
