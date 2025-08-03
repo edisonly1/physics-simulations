@@ -1,10 +1,10 @@
 import streamlit as st
+import numpy as np
+import matplotlib.pyplot as plt
 
 def app(data=None):
     st.title("Free Fall Simulator")
-    st.markdown("Coming soon: vertical motion under gravity.")
     if data:
-        st.write("AI Input:", data)
         v0 = data.get("initial_velocity", 0)
         h0 = data.get("height", 0)
         st.markdown("#### Using AI-extracted values:")
