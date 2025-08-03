@@ -14,7 +14,6 @@ You are an AP Physics 1 tutor.
 Extract only the physics parameters from this word problem and return them as a JSON object in this format:
 
 {{
-  {
   "object": "",
   "motion_type": "",
   "question_type": "",
@@ -26,11 +25,11 @@ Extract only the physics parameters from this word problem and return them as a 
   "distance": null,
   "time": null,
   "forces": [
-    {
+    {{
       "type": "",
       "magnitude": null,
       "direction": ""
-    }
+    }}
   ],
   "friction_coefficient": null,
   "friction_type": "",
@@ -53,10 +52,8 @@ Extract only the physics parameters from this word problem and return them as a 
   "constraints": "",
   "diagram_requested": true,
   "notes": ""
-}
-
 }}
-
+Only output the JSON object. Do not include code fences, explanations, or extra text.
 
 Problem: {problem_text}
 """
