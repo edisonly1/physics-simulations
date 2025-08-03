@@ -19,7 +19,7 @@ def app(data=None):
         h0 = st.slider("Initial Height (m)", 0.0, 10.0, 0.0, step=0.1)
 
     # --- Physics Calculation ---
-    g = 9.8
+    g = 10.0
     theta = np.radians(angle_deg)
     vx = v0 * np.cos(theta)
     vy = v0 * np.sin(theta)
