@@ -67,22 +67,21 @@ Problem: {problem_text}
         return {"error": str(e)}
 
 
-def extract_solution_steps(problem_text):
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    try:
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
-        prompt = f"""
+prompt = f"""
 You are an expert AP Physics 1 tutor.
 
-Given the following problem, write a step-by-step solution for a high school student. Use Markdown and LaTeX for equations, and clearly explain your reasoning, formulas used, and show all steps (not just the answer).
-Do not generate free body diagram or any extra words. Only the steps and explanations for the following problem. Let gravity = 10 m/s^2
+Given the following problem, write a detailed, step-by-step solution for a high school student. 
+- Use Markdown for lists and structure.
+- For equations, use single dollar signs `$...$` for inline math, and double dollar signs `$$...$$` for display/block math.
+- Do NOT use triple backticks (```) or code blocks for equations.
+- do not generate a free body diagram or anything else unnecessary to the explanation.
+- Clearly explain each step and show all calculations.
+- Do not generate a free body diagram or any extra words. Only the steps and explanations for the following problem.
+- Use $g = 10$ m/s² for gravity.
+
 Problem:
 \"\"\"
 {problem_text}
 \"\"\"
 """
-        response = model.generate_content(prompt)
-        content = response.text.strip()
-        return content
-    except Exception as e:
-        return f"**Error generating solution:** {e}"
+
