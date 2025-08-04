@@ -16,23 +16,18 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
 
     mg = mass * g
     fn = mg * np.cos(theta)
-    fp = mg * np.sin(theta)
     f_friction = mu * fn if show_friction and mu > 0 else 0
 
     # Direction vectors
     v_mg = np.array([0.0, -1.0])
     v_n = np.array([np.sin(theta), np.cos(theta)])
-    # Direction of ramp (from top to bottom)
+    # Friction is always up the ramp
     ramp_vec = np.array([x1 - x0, y1 - y0])
     ramp_unit = ramp_vec / np.linalg.norm(ramp_vec)
-
-    # Parallel: along ramp, down the ramp
-    v_p = ramp_unit
-    # Friction: along ramp, up the ramp
     v_fric = -ramp_unit
 
     # Scaling so largest force gets a reasonable arrow length
-    forces = [mg, fn, fp]
+    forces = [mg, fn]
     if show_friction and mu > 0:
         forces.append(f_friction)
     max_force = max(forces)
@@ -41,7 +36,6 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
 
     arrow_mg = v_mg * mg * scale
     arrow_fn = v_n * fn * scale
-    arrow_fp = v_p * fp * scale
     arrow_ffric = v_fric * f_friction * scale if (show_friction and mu > 0) else np.array([0.0, 0.0])
 
     head_width = 0.08 * target_length
@@ -60,9 +54,6 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     # Normal
     ax.arrow(*block_center, *arrow_fn, head_width=head_width, head_length=head_length,
              fc='orange', ec='orange', lw=3, length_includes_head=True)
-    # Parallel (down ramp)
-    ax.arrow(*block_center, *arrow_fp, head_width=head_width, head_length=head_length,
-             fc='red', ec='red', lw=3, length_includes_head=True)
     # Friction (up ramp)
     if show_friction and mu > 0:
         ax.arrow(*block_center, *arrow_ffric, head_width=head_width, head_length=head_length,
@@ -71,7 +62,6 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     legend_handles = [
         mlines.Line2D([], [], color='green', lw=3, label='mg (gravity)'),
         mlines.Line2D([], [], color='orange', lw=3, label='N (normal)'),
-        mlines.Line2D([], [], color='red', lw=3, label=r'$F_{\parallel}$ (down ramp)'),
     ]
     if show_friction and mu > 0:
         legend_handles.append(mlines.Line2D([], [], color='brown', lw=3, label=r'$f_k$ (friction)'))

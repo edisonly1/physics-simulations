@@ -135,37 +135,42 @@ def app(data=None):
     if use_ai and data.get("free_body_diagram", False):
         with st.expander("Free-Body Diagram (FBD) for this scenario"):
             draw_incline_fbd(angle, mass, mu, length, show_friction=mu > 0)
-        with st.expander("Step-by-step Acceleration Calculation"):
+        with st.expander("Step-by-step Calculation"):
             st.markdown(f"""
-**1. Calculate the force parallel to the ramp:**
-$$
-F_{{||}} = mg\\sin\\theta = {mass:.2f} \\times {g:.1f} \\times \\sin({angle:.1f}^\\circ) = {f_parallel:.2f}\\ \\text{{N}}
-$$
+**1. Draw a free-body diagram (FBD):**
+- Gravity ($mg$) straight down
+- Normal force ($N$) perpendicular to the ramp
+- Friction ($f_k$), if any, up the ramp
 
-**2. Calculate the normal force:**
-
-$$
-F_N = mg\\cos\\theta = {mass:.2f} \\times {g:.1f} \\times \\cos({angle:.1f}^\\circ) = {f_normal:.2f}\\ \\text{{N}}
-$$
-
-**3. Calculate the frictional force:**
+**2. Resolve gravity into components:**
 
 $$
-f_k = \\mu F_N = {mu:.2f} \\times {f_normal:.2f} = {f_friction:.2f}\\ \\text{{N}}
+mg_{{\\parallel}} = mg\\sin\\theta = {mass:.2f} \\times {g:.1f} \\times \\sin({angle:.1f}^\\circ) = {f_parallel:.2f}\\ \\text{{N}}
 $$
 
-**4. Calculate the net force down the ramp:**
-
 $$
-F_{{net}} = F_{{||}} - f_k = {f_parallel:.2f} - {f_friction:.2f} = {f_net:.2f}\\ \\text{{N}}
+mg_{{\\perp}} = mg\\cos\\theta = {mass:.2f} \\times {g:.1f} \\times \\cos({angle:.1f}^\\circ) = {f_normal:.2f}\\ \\text{{N}}
 $$
 
-**5. Finally, calculate the acceleration:**
+**3. Find friction force (if present):**
 
 $$
-a = \\frac{{F_{{net}}}}{{m}} = \\frac{{{f_net:.2f}}}{{{mass:.2f}}} = {acceleration:.2f}\\ \\text{{m/s}}^2
+f_k = \\mu N = {mu:.2f} \\times {f_normal:.2f} = {f_friction:.2f}\\ \\text{{N}}
+$$
+
+**4. Net force along ramp:**
+
+$$
+F_{{\\text{{net}}}} = mg_{{\\parallel}} - f_k = {f_parallel:.2f} - {f_friction:.2f} = {f_net:.2f}\\ \\text{{N}}
+$$
+
+**5. Calculate acceleration:**
+
+$$
+a = \\frac{{F_{{\\text{{net}}}}}}{{m}} = \\frac{{{f_net:.2f}}}{{{mass:.2f}}} = {acceleration:.2f}\\ \\text{{m/s}}^2
 $$
 """)
+
 
     # Plots for position/velocity vs time
     with st.expander("View Position & Velocity vs Time Graphs"):
