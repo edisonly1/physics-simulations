@@ -135,41 +135,6 @@ def app(data=None):
     if use_ai and data.get("free_body_diagram", False):
         with st.expander("Free-Body Diagram (FBD) for this scenario"):
             draw_incline_fbd(angle, mass, mu, length, show_friction=mu > 0)
-        with st.expander("Step-by-step Calculation"):
-            st.markdown(f"""
-**1. Draw a free-body diagram (FBD):**
-- Gravity ($mg$) straight down
-- Normal force ($N$) perpendicular to the ramp
-- Friction ($f_k$), if any, up the ramp
-
-**2. Resolve gravity into components:**
-
-$$
-mg_{{\\parallel}} = mg\\sin\\theta = {mass:.2f} \\times {g:.1f} \\times \\sin({angle:.1f}^\\circ) = {f_parallel:.2f}\\ \\text{{N}}
-$$
-
-$$
-mg_{{\\perp}} = mg\\cos\\theta = {mass:.2f} \\times {g:.1f} \\times \\cos({angle:.1f}^\\circ) = {f_normal:.2f}\\ \\text{{N}}
-$$
-
-**3. Find friction force (if present):**
-
-$$
-f_k = \\mu N = {mu:.2f} \\times {f_normal:.2f} = {f_friction:.2f}\\ \\text{{N}}
-$$
-
-**4. Net force along ramp:**
-
-$$
-F_{{\\text{{net}}}} = mg_{{\\parallel}} - f_k = {f_parallel:.2f} - {f_friction:.2f} = {f_net:.2f}\\ \\text{{N}}
-$$
-
-**5. Calculate acceleration:**
-
-$$
-a = \\frac{{F_{{\\text{{net}}}}}}{{m}} = \\frac{{{f_net:.2f}}}{{{mass:.2f}}} = {acceleration:.2f}\\ \\text{{m/s}}^2
-$$
-""")
 
 
     # Plots for position/velocity vs time
@@ -182,17 +147,5 @@ $$
         ax2.grid(True)
         ax2.legend()
         st.pyplot(fig2)
-
-    with st.expander("View Calculations and Formulas"):
-        st.markdown(r"""
-        **Equations Used:**
-
-        - $F_{\parallel} = mg\sin(\theta)$  
-        - $F_N = mg\cos(\theta)$  
-        - $f_k = \mu mg\cos(\theta)$  
-        - $a = \frac{F_{\parallel} - f_k}{m}$  
-        - $v_f = \sqrt{2aL}$  
-        - $t = \frac{v_f}{a}$
-        """)
 
 
