@@ -138,7 +138,6 @@ def app(data=None):
         with st.expander("Step-by-step Acceleration Calculation"):
             st.markdown(f"""
 **1. Calculate the force parallel to the ramp:**
-test
 $$
 F_{{||}} = mg\\sin\\theta = {mass:.2f} \\times {g:.1f} \\times \\sin({angle:.1f}^\\circ) = {f_parallel:.2f}\\ \\text{{N}}
 $$
