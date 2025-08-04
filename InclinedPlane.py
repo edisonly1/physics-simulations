@@ -50,9 +50,9 @@ def app(data=None):
 
         # Use 'distance' as ramp length if present, else default
         try:
-            length = float(data.get("distance", 5) or 5)
+            length = float(data.get("length", 5) or 5)
         except Exception:
-            length = 5
+            length = 10
 
         motion_type = str(data.get("motion_type", "")).lower()
         question_type = str(data.get("question_type", "")).lower()

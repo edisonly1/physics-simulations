@@ -20,6 +20,7 @@ Extract only the physics parameters from this word problem and return them as a 
   "mass": null,
   "initial_velocity": null,
   "final_velocity": null,
+  "length": null,
   "angle": null,
   "direction": "",
   "height": null,
