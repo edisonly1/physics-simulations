@@ -9,9 +9,9 @@ def app(data=None):
     st.title("Animated Projectile Motion Simulator")
 
     # --- Input Handling ---
-    v0 = float(data.get("initial_velocity", 20)) if data else st.slider("Initial Velocity (m/s)", 0.0, 50.0, 25.0, step=0.1)
-    angle_deg = float(data.get("angle", 45)) if data else st.slider("Launch Angle (degrees)", 0.0, 90.0, 45.0, step=0.1)
-    h0 = float(data.get("height", 0)) if data else st.slider("Initial Height (m)", 0.0, 10.0, 0.0, step=0.1)
+    v0 = float(data.get("initial_velocity" or 20)) if data else st.slider("Initial Velocity (m/s)", 0.0, 50.0, 25.0, step=0.1)
+    angle_deg = float(data.get("angle" or 45)) if data else st.slider("Launch Angle (degrees)", 0.0, 90.0, 45.0, step=0.1)
+    h0 = float(data.get("height" or 0)) if data else st.slider("Initial Height (m)", 0.0, 10.0, 0.0, step=0.1)
     question_type = data.get("question_type", "").lower() if data else ""
 
     if data:
