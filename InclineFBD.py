@@ -57,7 +57,7 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     # Friction (up ramp)
     if show_friction and mu > 0:
         ax.arrow(*block_center, *arrow_ffric, head_width=head_width, head_length=head_length,
-                 fc='brown', ec='brown', lw=3, length_includes_head=True)
+                 fc='brown', ec='brown', lw=3, length_includes_head=True, zorder=4)
 
     legend_handles = [
         mlines.Line2D([], [], color='green', lw=3, label='mg (gravity)'),
