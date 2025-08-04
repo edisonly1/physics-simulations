@@ -19,11 +19,19 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     fp = mg * np.sin(theta)
     f_friction = mu * fn if show_friction and mu > 0 else 0
 
+    # Direction vectors
     v_mg = np.array([0.0, -1.0])
     v_n = np.array([np.sin(theta), np.cos(theta)])
-    v_p = np.array([np.cos(theta), -np.sin(theta)])
-    v_fric = -v_p
+    # Direction of ramp (from top to bottom)
+    ramp_vec = np.array([x1 - x0, y1 - y0])
+    ramp_unit = ramp_vec / np.linalg.norm(ramp_vec)
 
+    # Parallel: along ramp, down the ramp
+    v_p = ramp_unit
+    # Friction: along ramp, up the ramp
+    v_fric = -ramp_unit
+
+    # Scaling so largest force gets a reasonable arrow length
     forces = [mg, fn, fp]
     if show_friction and mu > 0:
         forces.append(f_friction)
@@ -52,10 +60,10 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     # Normal
     ax.arrow(*block_center, *arrow_fn, head_width=head_width, head_length=head_length,
              fc='orange', ec='orange', lw=3, length_includes_head=True)
-    # Parallel
+    # Parallel (down ramp)
     ax.arrow(*block_center, *arrow_fp, head_width=head_width, head_length=head_length,
              fc='red', ec='red', lw=3, length_includes_head=True)
-    # Friction
+    # Friction (up ramp)
     if show_friction and mu > 0:
         ax.arrow(*block_center, *arrow_ffric, head_width=head_width, head_length=head_length,
                  fc='brown', ec='brown', lw=3, length_includes_head=True)
