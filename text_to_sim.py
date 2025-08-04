@@ -4,10 +4,8 @@ import json
 
 def extract_physics_info(problem_text):
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-
     try:
         model = genai.GenerativeModel("gemini-2.0-flash-lite")
-
         prompt = f"""
 You are an AP Physics 1 tutor.
 
@@ -54,43 +52,37 @@ Only output the JSON object. Do not include code fences, explanations, or extra 
 
 Problem: {problem_text}
 """
-
         response = model.generate_content(prompt)
         content = response.text.strip()
 
         if content.startswith("```json"):
             content = content.split("```json")[1].split("```")[0].strip()
-
         return json.loads(content)
-
     except Exception as e:
         return {"error": str(e)}
 
-
-prompt = f"""
+def extract_solution_steps(problem_text):
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    try:
+        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+        prompt = f"""
 You are an expert AP Physics 1 tutor.
 
 Given the following problem, write a detailed, step-by-step solution for a high school student. 
 - Use Markdown for lists and structure.
 - For equations, use single dollar signs `$...$` for inline math, and double dollar signs `$$...$$` for display/block math.
 - Do NOT use triple backticks (```) or code blocks for equations.
-- do not generate a free body diagram or anything else unnecessary to the explanation.
-- Clearly explain each step and show all calculations.
 - Do not generate a free body diagram or any extra words. Only the steps and explanations for the following problem.
 - Use $g = 10$ m/s² for gravity.
 
-Problem: {problem_text}
+Problem:
+\"\"\"
+{problem_text}
+\"\"\"
 """
-
         response = model.generate_content(prompt)
         content = response.text.strip()
-
-        if content.startswith("```json"):
-            content = content.split("```json")[1].split("```")[0].strip()
-
-        return json.loads(content)
-
+        content = content.replace('```', '$$').replace('\\\\', '\\')
+        return content
     except Exception as e:
-        return {"error": str(e)}
-
-
+        return f"**Error generating solution:** {e}"
