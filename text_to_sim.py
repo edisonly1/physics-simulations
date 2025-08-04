@@ -79,10 +79,18 @@ Given the following problem, write a detailed, step-by-step solution for a high 
 - Do not generate a free body diagram or any extra words. Only the steps and explanations for the following problem.
 - Use $g = 10$ m/s² for gravity.
 
-Problem:
-\"\"\"
-{problem_text}
-\"\"\"
+Problem: {problem_text}
 """
+
+        response = model.generate_content(prompt)
+        content = response.text.strip()
+
+        if content.startswith("```json"):
+            content = content.split("```json")[1].split("```")[0].strip()
+
+        return json.loads(content)
+
+    except Exception as e:
+        return {"error": str(e)}
 
 
