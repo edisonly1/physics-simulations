@@ -1,6 +1,6 @@
 import streamlit as st
 import ProjectileMotion
-from text_to_sim import extract_physics_info
+from text_to_sim import extract_physics_info, extract_solution_steps
 import InclinedPlane
 import FreeFall
 
@@ -15,10 +15,9 @@ if page == "Home":
     This tool is designed to help visualize AP Physics 1 problems.
     
     - Use AI to break down word problems
-    - Explore projectile motion with graphs and sliders
     - More simulations coming soon!
     
-    Select a simulation from the sidebar to get started.
+    Select the problem parser from the sidebar to get started.
     """)
 
 elif page == "AI Problem Parser":
@@ -26,6 +25,10 @@ elif page == "AI Problem Parser":
     st.markdown("Paste in an AP Physics style word problem and let Gemini extract the physical setup.")
 
     problem = st.text_area("Enter your physics problem:")
+
+    # Store problem in session state so it's available later
+    if problem:
+        st.session_state["problem_text"] = problem
 
     if st.button("Extract Physics Info"):
         if problem.strip() == "":
@@ -39,11 +42,14 @@ elif page == "AI Problem Parser":
 
     # Load from session state (after user hits "Extract")
     parsed = st.session_state.get("parsed_result", None)
+    problem_text = st.session_state.get("problem_text", "")
 
     if parsed and "initial_velocity" in parsed and "angle" in parsed:
         if st.button("Simulate This Problem"):
             motion_type = parsed.get("motion_type", "").lower()
             constraints = parsed.get("constraints", "").lower()
+
+            # Show simulation (match your logic for routing)
             if motion_type == "projectile":
                 ProjectileMotion.app(data=parsed)
             elif motion_type in ["free fall"]:
@@ -53,3 +59,8 @@ elif page == "AI Problem Parser":
             else:
                 st.warning(f"Simulation for motion type '{motion_type}' not implemented.")
 
+            # Get AI solution steps (Gemini) and display after simulation
+            st.markdown("### Step-by-step Solution")
+            with st.spinner("Generating solution steps..."):
+                steps = extract_solution_steps(problem_text)
+                st.markdown(steps)

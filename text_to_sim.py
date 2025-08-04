@@ -68,3 +68,24 @@ Problem: {problem_text}
 
     except Exception as e:
         return {"error": str(e)}
+
+
+def extract_solution_steps(problem_text):
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    try:
+        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+        prompt = f"""
+You are an expert AP Physics 1 tutor.
+
+Given the following problem, write a detailed, step-by-step solution for a high school student. Use Markdown and LaTeX for equations, and clearly explain your reasoning, formulas used, and show all steps (not just the answer).
+
+Problem:
+\"\"\"
+{problem_text}
+\"\"\"
+"""
+        response = model.generate_content(prompt)
+        content = response.text.strip()
+        return content
+    except Exception as e:
+        return f"**Error generating solution:** {e}"
