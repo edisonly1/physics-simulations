@@ -77,8 +77,8 @@ def extract_solution_steps(problem_text):
         prompt = f"""
 You are an expert AP Physics 1 tutor.
 
-Given the following problem, write a detailed, step-by-step solution for a high school student. Use Markdown and LaTeX for equations, and clearly explain your reasoning, formulas used, and show all steps (not just the answer).
-Do not generate free body diagram.
+Given the following problem, write a step-by-step solution for a high school student. Use Markdown and LaTeX for equations, and clearly explain your reasoning, formulas used, and show all steps (not just the answer).
+Do not generate free body diagram or any extra words. Only the steps and explanations for the following problem.
 Problem:
 \"\"\"
 {problem_text}
