@@ -64,8 +64,8 @@ def app(data=None):
 
 
         # Let user override ramp length if AI did not supply it
-        if not data.get("distance"):
-            length = st.slider("Ramp Length (m)", 0.1, 20.0, 5.0)
+        #if not data.get("distance"):
+        #    length = st.slider("Ramp Length (m)", 0.1, 20.0, 5.0)
     else:
         mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0)
         angle = st.slider("Incline Angle (°)", 0.0, 90.0, 30.0)
