@@ -169,7 +169,16 @@ def app(data=None):
     # Show FBD and step-by-step if requested by AI
     if use_ai and data.get("free_body_diagram", False):
         with st.expander("Free-Body Diagram (FBD) for this scenario"):
-            draw_incline_fbd(angle, mass, mu, length, show_friction=mu > 0)
+            draw_incline_fbd(
+    angle,
+    mass,
+    mu,
+    length,
+    show_friction=mu > 0,
+    direction=direction,
+    initial_velocity=float(data.get("initial_velocity") or 0),
+    show_applied=True
+)
 
     # Plots for position/velocity vs time
     with st.expander("View Position & Velocity vs Time Graphs"):
