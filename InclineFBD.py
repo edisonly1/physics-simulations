@@ -3,7 +3,10 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import matplotlib.lines as mlines
 
-def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
+def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False, direction="down"):
+    """
+    direction: 'down' (default), or 'up' (or anything containing 'up' is treated as 'up')
+    """
     g = 10.0
     theta = np.radians(angle_deg)
     x0, y0 = 0, length * np.sin(theta)
@@ -18,15 +21,23 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     fn = mg * np.cos(theta)
     f_friction = mu * fn if show_friction and mu > 0 else 0
 
-    # Direction vectors
-    v_mg = np.array([0.0, -1.0])
-    v_n = np.array([np.sin(theta), np.cos(theta)])
-    # Friction is always up the ramp
+    # --- Robust direction parsing ---
+    direction_raw = str(direction).lower()
+    if "up" in direction_raw:
+        direction = "up"
+    else:
+        direction = "down"
+
+    # --- Force direction vectors ---
+    v_mg = np.array([0.0, -1.0])  # gravity: always down
+    v_n = np.array([np.sin(theta), np.cos(theta)])  # normal: perp to incline
+
     ramp_vec = np.array([x1 - x0, y1 - y0])
     ramp_unit = ramp_vec / np.linalg.norm(ramp_vec)
+    # Friction is always up the ramp (opposes motion)
     v_fric = -ramp_unit
 
-    # Scaling so largest force gets a reasonable arrow length
+    # --- Arrow scaling: max force gets target_length ---
     forces = [mg, fn]
     if show_friction and mu > 0:
         forces.append(f_friction)
@@ -41,24 +52,22 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     head_width = 0.08 * target_length
     head_length = 0.11 * target_length
 
+    # --- Plot setup ---
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.plot([x0, x1], [y0, y1], color="k", lw=4)
     ax.plot([x1 - 1, x1 + 1], [y1, y1], color="brown", lw=2)
-
-    # Draw point mass as a blue dot
     ax.plot(block_center[0], block_center[1], 'o', color="royalblue", markersize=12, markeredgecolor="black", markeredgewidth=2, label="Object", zorder=5)
 
-    # Gravity
+    # --- Draw force arrows ---
     ax.arrow(*block_center, *arrow_mg, head_width=head_width, head_length=head_length,
              fc='green', ec='green', lw=3, length_includes_head=True)
-    # Normal
     ax.arrow(*block_center, *arrow_fn, head_width=head_width, head_length=head_length,
              fc='orange', ec='orange', lw=3, length_includes_head=True)
-    # Friction (up ramp)
     if show_friction and mu > 0:
         ax.arrow(*block_center, *arrow_ffric, head_width=head_width, head_length=head_length,
                  fc='brown', ec='brown', lw=3, length_includes_head=True, zorder=4)
 
+    # --- Legend ---
     legend_handles = [
         mlines.Line2D([], [], color='green', lw=3, label='mg (gravity)'),
         mlines.Line2D([], [], color='orange', lw=3, label='N (normal)'),

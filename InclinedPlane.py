@@ -56,7 +56,13 @@ def app(data=None):
 
         motion_type = str(data.get("motion_type", "")).lower()
         question_type = str(data.get("question_type", "")).lower()
-        direction = str(data.get("direction", "down")).lower()
+        direction_raw = str(data.get("direction", "down")).lower()
+        if "up" in direction_raw:
+            direction = "up"
+        else:
+            direction = "down"
+
+
         # Let user override ramp length if AI did not supply it
         if not data.get("distance"):
             length = st.slider("Ramp Length (m)", 0.1, 20.0, 5.0)
