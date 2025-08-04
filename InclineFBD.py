@@ -107,9 +107,6 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
 
     ax.set_aspect("equal")
     ax.axis("off")
-    ax.set_title("Free-Body Diagram", fontsize=15, weight='bold')
-    plt.tight_layout()
-    st.pyplot(fig)
 
     margin = 1.0
     ax.set_xlim(block_center[0] - margin, block_center[0] + margin)
