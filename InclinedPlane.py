@@ -74,7 +74,7 @@ def app(data=None):
     f_normal = mass * g * np.cos(theta_rad)
     f_friction = mu * f_normal
     # Determine net force and acceleration depending on direction
-    if direction == "up":
+    if "up" in direction:
         # Friction and gravity both act to slow the block
         f_net = -f_parallel - f_friction
     else:
@@ -86,7 +86,7 @@ def app(data=None):
     # For up-the-ramp problems (e.g., "how far until stopping"), the logic may need v0 > 0.
     v0 = float(data.get("initial_velocity", 0)) if use_ai else 0.0
 
-    if direction == "up":
+    if "up" in direction:
         # Block starts at bottom with v0 up the ramp, stops at distance d.
         # v^2 = v0^2 + 2ad, but final v = 0, so: d = -v0^2 / (2a)
         # a must be negative for the block to stop
@@ -115,7 +115,7 @@ def app(data=None):
     x0, y0 = 0, length * np.sin(theta_rad)  # top of ramp
     x1, y1 = length * np.cos(theta_rad), 0  # bottom of ramp
 
-    if direction == "up":
+    if "up" in direction:
         # Animate from bottom to up (reverse ramp)
         x_block = x1 - s * np.cos(theta_rad)
         y_block = y1 + s * np.sin(theta_rad)
@@ -170,7 +170,7 @@ def app(data=None):
         fig2, ax2 = plt.subplots()
         ax2.plot(t, s, label="Position (m)")
         # For up, velocity is v0 + at; for down, velocity is just at
-        if direction == "up":
+        if "up" in direction:
             velocity = v0 + acceleration * t
         else:
             velocity = acceleration * t
