@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import tempfile
+importlib.reload(InclineFBD)
 from InclineFBD import draw_incline_fbd
 
 
