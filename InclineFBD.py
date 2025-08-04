@@ -82,7 +82,7 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     ax.arrow(*block_center, *arrow_fn, head_width=head_width, head_length=head_length,
              fc='orange', ec='orange', lw=3, length_includes_head=True)
     fn_tip = block_center + arrow_fn
-    ax.text(fn_tip[0] + 0.04, fn_tip[1] + 0.04, r"$N$", color="orange", fontsize=16, ha="left", va="bottom")
+    ax.text(fn_tip[0] + 0.01, fn_tip[1] + 0.01, r"$N$", color="orange", fontsize=16, ha="left", va="bottom")
 
     # Parallel
     ax.arrow(*block_center, *arrow_fp, head_width=head_width, head_length=head_length,
@@ -107,9 +107,10 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
 
     ax.set_aspect("equal")
     ax.axis("off")
-    margin = 1.2
-    ax.set_xlim(block_center[0] - margin, block_center[0] + margin)
-    ax.set_ylim(block_center[1] - margin, block_center[1] + margin)
-    ax.set_title("Free-Body Diagram (FBD) for Block on Incline", fontsize=18, weight='bold')
+    ax.set_title("Free-Body Diagram", fontsize=15, weight='bold')
     plt.tight_layout()
     st.pyplot(fig)
+
+    margin = 1.0
+    ax.set_xlim(block_center[0] - margin, block_center[0] + margin)
+    ax.set_ylim(block_center[1] - margin, block_center[1] + margin)
