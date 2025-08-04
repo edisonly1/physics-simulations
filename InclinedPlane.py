@@ -6,7 +6,7 @@ import tempfile
 from InclineFBD import draw_incline_fbd
 
 def app(data=None):
-    st.title("Inclined Plane Simulator (Animated)")
+    st.title("Inclined Plane Simulator")
 
     g = 10.0  # gravity
 
@@ -96,7 +96,7 @@ def app(data=None):
                     initial_velocity=v0,
                     show_applied=True
                 )
-        return  # No animation for constant velocity
+        return  "No animation required as speed is constant" # No animation for constant velocity
 
     # --- Standard kinematics/animation ---
     if "up" in direction:
