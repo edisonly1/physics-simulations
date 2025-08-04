@@ -84,4 +84,9 @@ Problem:
 {problem_text}
 \"\"\"
 """
+        response = model.generate_content(prompt)
+        content = response.text.strip()
+        return content
+    except Exception as e:
+        return f"**Error generating solution:** {e}"
 
