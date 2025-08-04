@@ -46,7 +46,7 @@ Extract only the physics parameters from this word problem and return them as a 
   "other_objects": [],
   "constraints": "",
   "free_body_diagram": true,
-  "notes": "" (What is going on in the question?)
+  "notes": "" (What is going on in the question? describe the setting)
 }}
 Only output the JSON object. Do not include code fences, explanations, or extra text.
 
