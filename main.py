@@ -5,7 +5,7 @@ import InclinedPlane
 import FreeFall
 
 # Sidebar Navigation
-st.sidebar.title("Physics Simulation Lab")
+st.sidebar.title("Physics Simulation Lab test")
 page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser"])
 
 # Page Routing
