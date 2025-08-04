@@ -46,7 +46,7 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     ax.plot([x1 - 1, x1 + 1], [y1, y1], color="brown", lw=2)
 
     # Draw point mass as a blue dot
-    ax.plot(block_center[0], block_center[1], 'o', color="royalblue", markersize=12, markeredgecolor="black", markeredgewidth=2, label="Object")
+    ax.plot(block_center[0], block_center[1], 'o', color="royalblue", markersize=12, markeredgecolor="black", markeredgewidth=2, label="Object", zorder=5)
 
     # Gravity
     ax.arrow(*block_center, *arrow_mg, head_width=head_width, head_length=head_length,
