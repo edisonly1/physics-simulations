@@ -82,7 +82,7 @@ def draw_incline_fbd(angle_deg=30, mass=2, mu=0, length=5, show_friction=False):
     ax.arrow(*block_center, *arrow_fn, head_width=head_width, head_length=head_length,
              fc='orange', ec='orange', lw=3, length_includes_head=True)
     fn_tip = block_center + arrow_fn
-    ax.text(fn_tip[0] + 0.2, fn_tip[1] + 0.2, r"$N$", color="orange", fontsize=16, ha="left", va="bottom")
+    ax.text(fn_tip[0] + 0.05, fn_tip[1] + 0.05, r"$N$", color="orange", fontsize=16, ha="left", va="bottom")
 
     # Parallel
     ax.arrow(*block_center, *arrow_fp, head_width=head_width, head_length=head_length,
