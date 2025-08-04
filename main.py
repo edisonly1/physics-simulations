@@ -48,13 +48,14 @@ elif page == "AI Problem Parser":
         if st.button("Simulate This Problem"):
             motion_type = parsed.get("motion_type", "").lower()
             constraints = parsed.get("constraints", "").lower()
+            notes = parsed.get("notes", "").lower()
 
             # Show simulation (match your logic for routing)
             if motion_type == "projectile":
                 ProjectileMotion.app(data=parsed)
             elif motion_type in ["free fall"]:
                 FreeFall.app(data=parsed)
-            elif "incline" in constraints:
+            elif "incline" in constraints or "incline" in notes:
                 InclinedPlane.app(data=parsed)
             else:
                 st.warning(f"Simulation for motion type '{motion_type}' not implemented.")
