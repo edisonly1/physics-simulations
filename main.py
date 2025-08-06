@@ -6,7 +6,7 @@ import FreeFall
 
 # Sidebar Navigation
 st.sidebar.title("Physics Simulation Lab")
-page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser", "Projectile Motion"])
+page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser", "Projectile Motion", "Inclined PLane"])
 
 # Page Routing
 if page == "Home":
@@ -74,3 +74,13 @@ elif page == "Projectile Motion":
     - See trajectories, graphs, and calculations
     """)
     ProjectileMotion.app()
+elif page == "Inclined Plane":
+    st.title("Inclined Plane Simulator")
+    st.markdown("""
+    Explore the physics of a block on an incline.
+
+    - Adjust mass, angle, friction, ramp length, and more
+    - Simulate up and down the ramp, with or without friction
+    - See force diagrams and step-by-step kinematics
+    """)
+    InclinedPlane.app()
