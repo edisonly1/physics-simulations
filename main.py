@@ -6,7 +6,7 @@ import FreeFall
 
 # Sidebar Navigation
 st.sidebar.title("Physics Simulation Lab")
-page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser", "Projectile Motion", "Inclined PLane"])
+page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser", "Projectile Motion", "Inclined Plane"])
 
 # Page Routing
 if page == "Home":
