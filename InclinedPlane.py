@@ -65,6 +65,8 @@ def app(data=None):
         direction = st.selectbox("Direction", ["down", "up"]).lower()
         v0 = st.slider("Initial velocity (m/s)", 0.0, 20.0, 0.0)
         vf = 0.0
+        show_fbd = st.checkbox("Show Free-Body Diagram", value=True)
+        show_applied = st.checkbox("Show applied (push) force?", value=(abs(v0) > 0))
 
     theta_rad = np.radians(angle)
     f_parallel = mass * g * np.sin(theta_rad)
@@ -177,6 +179,18 @@ def app(data=None):
                 initial_velocity=v0,
                 show_applied=abs(v0) > 0
             )
+    if show_fbd:
+    with st.expander("Free-Body Diagram (FBD) for this scenario"):
+        draw_incline_fbd(
+            angle,
+            mass,
+            mu,
+            length,
+            show_friction=mu > 0,
+            direction=direction,
+            initial_velocity=v0,
+            show_applied=show_applied
+        )
 
     # Plots for position/velocity vs time
     with st.expander("View Position & Velocity vs Time Graphs"):
