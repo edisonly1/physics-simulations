@@ -6,21 +6,15 @@ import tempfile
 from InclineFBD import draw_incline_fbd
 
 def app(data=None):
-    st.title("Inclined Plane Simulator")
+    st.title("Inclined Plane Simulator (Animated)")
 
     g = 10.0  # gravity
 
     use_ai = data is not None
 
-    # Set defaults in case some values are missing from AI extraction
-    angle = 30
-    mass = 1
-    mu = 0
-    length = 5
-
+    # --- Input Handling ---
     if use_ai:
         st.markdown("#### Using AI-extracted values:")
-
         try:
             angle = float(data.get("angle", 30))
         except Exception:
@@ -57,7 +51,10 @@ def app(data=None):
 
         v0 = float(data.get("initial_velocity") or 0)
         vf = float(data.get("final_velocity") or 0)
+        show_fbd = data.get("free_body_diagram", False)
+        show_applied = abs(v0) > 0
     else:
+        st.markdown("#### Interactive mode: Use the sliders below to create your own ramp scenario.")
         mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0)
         angle = st.slider("Incline Angle (°)", 0.0, 90.0, 30.0)
         mu = st.slider("Friction Coefficient (μ)", 0.0, 1.0, 0.0)
@@ -77,16 +74,16 @@ def app(data=None):
     is_constant_velocity = abs(v0 - vf) < 1e-6 and v0 > 0
 
     if is_constant_velocity:
-        # Net force is zero
         f_applied = f_parallel + f_friction if "up" in direction else f_parallel - f_friction
         st.markdown("### Results (Constant Velocity)")
         st.markdown("**The block moves at a constant speed.** Net force is zero; applied force exactly balances gravity and friction.")
         st.markdown(f"- **Force required to move at constant velocity:** `{f_applied:.2f} N`")
         st.markdown(f"- **Friction force:** `{f_friction:.2f} N`")
         st.markdown(f"- **Gravity component down ramp:** `{f_parallel:.2f} N`")
+        st.info("No animation required as speed is constant.")
 
-        # Show FBD
-        if use_ai and data.get("free_body_diagram", False):
+        # FBD (mode-specific)
+        if show_fbd:
             with st.expander("Free-Body Diagram (FBD) for this scenario"):
                 draw_incline_fbd(
                     angle,
@@ -96,10 +93,9 @@ def app(data=None):
                     show_friction=mu > 0,
                     direction=direction,
                     initial_velocity=v0,
-                    show_applied=True
+                    show_applied=show_applied
                 )
-        st.info("No animation required as speed is constant")
-        return # No animation for constant velocity
+        return
 
     # --- Standard kinematics/animation ---
     if "up" in direction:
@@ -166,8 +162,8 @@ def app(data=None):
     plt.close(fig)
     st.image(tmpfile.name, caption=title, use_container_width=True)
 
-    # FBD
-    if use_ai and data.get("free_body_diagram", False):
+    # --- FBD: manual and AI mode supported ---
+    if show_fbd:
         with st.expander("Free-Body Diagram (FBD) for this scenario"):
             draw_incline_fbd(
                 angle,
@@ -177,22 +173,10 @@ def app(data=None):
                 show_friction=mu > 0,
                 direction=direction,
                 initial_velocity=v0,
-                show_applied=abs(v0) > 0
+                show_applied=show_applied
             )
-    if show_fbd:
-    with st.expander("Free-Body Diagram (FBD) for this scenario"):
-        draw_incline_fbd(
-            angle,
-            mass,
-            mu,
-            length,
-            show_friction=mu > 0,
-            direction=direction,
-            initial_velocity=v0,
-            show_applied=show_applied
-        )
 
-    # Plots for position/velocity vs time
+    # --- Plots for position/velocity vs time ---
     with st.expander("View Position & Velocity vs Time Graphs"):
         fig2, ax2 = plt.subplots()
         ax2.plot(t, s, label="Position (m)")
