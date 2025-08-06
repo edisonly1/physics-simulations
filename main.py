@@ -6,7 +6,7 @@ import FreeFall
 
 # Sidebar Navigation
 st.sidebar.title("Physics Simulation Lab")
-page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser"])
+page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser", "Projectile Motion"])
 
 # Page Routing
 if page == "Home":
@@ -65,3 +65,12 @@ elif page == "AI Problem Parser":
             with st.spinner("Generating solution steps..."):
                 steps = extract_solution_steps(problem_text)
                 st.markdown(steps)
+elif page == "Projectile Motion":
+    st.title("Projectile Motion Simulator")
+    st.markdown("""
+    Explore classic projectile motion.
+    
+    - Adjust initial velocity, angle, and height
+    - See trajectories, graphs, and calculations
+    """)
+    ProjectileMotion.app()
