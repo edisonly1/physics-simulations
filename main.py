@@ -1,86 +1,45 @@
+# main.py — AP Physics 1 Simulator (no parser)
 import streamlit as st
 import ProjectileMotion
-from text_to_sim import extract_physics_info, extract_solution_steps
 import InclinedPlane
 import FreeFall
 
-# Sidebar Navigation
+st.set_page_config(page_title="Physics Simulation Lab", page_icon="📐", layout="wide")
+
+# ---- Sidebar ----
 st.sidebar.title("Physics Simulation Lab")
-page = st.sidebar.selectbox("Choose a Simulation", ["Home", "AI Problem Parser", "Projectile Motion", "Inclined Plane"])
+page = st.sidebar.selectbox(
+    "Choose a Simulation",
+    ["Home", "Projectile Motion", "Inclined Plane", "Free Fall"],
+)
 
-# Page Routing
+# ---- Pages ----
 if page == "Home":
-    st.title("Welcome to the Physics Simulation Lab!")
+    st.title("Welcome to the Physics Simulation Lab! 🧪")
     st.markdown("""
-    This tool is designed to help visualize AP Physics 1 problems.
-    
-    - Use AI to break down word problems
-    - More simulations coming soon!
-    
-    Select the problem parser from the sidebar to get started.
-    """)
+This is a **parser-free**, classroom-friendly simulator with variable selectors only.
 
-elif page == "AI Problem Parser":
-    st.title("AI-Powered Problem Interpreter")
-    st.markdown("Paste in an AP Physics style word problem and let Gemini extract the physical setup.")
+**Included modules**
+- **Projectile Motion** — launch at any angle and/or from a height; animated path + formulas
+- **Inclined Plane** — friction, up/down cases, stopping distance; FBD viewer + animation
+- **Free Fall** — 1D vertical motion; time to ground + animation
 
-    problem = st.text_area("Enter your physics problem:")
+**How to use**
+1. Pick a simulation from the sidebar.
+2. Adjust sliders and inputs.
+3. Read the key results and expand the formulas/graphs where available.
 
-    # Store problem in session state so it's available later
-    if problem:
-        st.session_state["problem_text"] = problem
+> Tip: If you ever want the AI parser back later, we can add it behind a toggle without touching the simulators.
+""")
 
-    if st.button("Extract Physics Info"):
-        if problem.strip() == "":
-            st.warning("Please enter a problem first.")
-        else:
-            with st.spinner("Analyzing with Gemini..."):
-                result = extract_physics_info(problem)
-                st.session_state["parsed_result"] = result  # Store for later use
-                st.subheader("Parsed Physics Setup")
-                st.json(result)
-
-    # Load from session state (after user hits "Extract")
-    parsed = st.session_state.get("parsed_result", None)
-    problem_text = st.session_state.get("problem_text", "")
-
-    if parsed and "initial_velocity" in parsed and "angle" in parsed:
-        if st.button("Simulate This Problem"):
-            motion_type = parsed.get("motion_type", "").lower()
-            constraints = parsed.get("constraints", "").lower()
-            notes = parsed.get("notes", "").lower()
-
-            # Show simulation (match your logic for routing)
-            if motion_type == "projectile":
-                ProjectileMotion.app(data=parsed)
-            elif motion_type in ["free fall"]:
-                FreeFall.app(data=parsed)
-            elif "incline" in constraints or "incline" in notes:
-                InclinedPlane.app(data=parsed)
-            else:
-                st.warning(f"Simulation for motion type '{motion_type}' not implemented.")
-
-            # Get AI solution steps (Gemini) and display after simulation
-            st.markdown("### Step-by-step Solution")
-            with st.spinner("Generating solution steps..."):
-                steps = extract_solution_steps(problem_text)
-                st.markdown(steps)
 elif page == "Projectile Motion":
     st.title("Projectile Motion Simulator")
-    st.markdown("""
-    Explore classic projectile motion.
-    
-    - Adjust initial velocity, angle, and height
-    - See trajectories, graphs, and calculations
-    """)
-    ProjectileMotion.app()
+    ProjectileMotion.app()  # interactive mode (no data)
+
 elif page == "Inclined Plane":
     st.title("Inclined Plane Simulator")
-    st.markdown("""
-    Explore the physics of a block on an incline.
+    InclinedPlane.app()     # interactive mode (no data)
 
-    - Adjust mass, angle, friction, ramp length, and more
-    - Simulate up and down the ramp, with or without friction
-    - See force diagrams and step-by-step kinematics
-    """)
-    InclinedPlane.app()
+elif page == "Free Fall":
+    st.title("Free Fall Simulator")
+    FreeFall.app()          # interactive mode (no data)
