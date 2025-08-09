@@ -1,11 +1,12 @@
 """
+Projectile Motion (AP Physics 1)
+
 Features
-- Sliders: v0, angle, initial height h0, gravity g, duration T (upper bound), time step dt
+- Sliders: v0, angle, initial height h0, duration T, time step dt, gravity g
 - Outputs: time of flight, range, max height, vx, v0y
-- Graphs: x–t, y–t, and x–y with overlay of saved runs (each trimmed at its own touchdown)
-- Animation: play/pause/reset with FPS and speed; timeline trimmed at touchdown
-- Preset button for quick classroom example
-- Optional: app(data={...}) to prefill from an AI parser
+- Graphs: x–t, y–t, and x–y trajectory with overlay of saved runs (all stop exactly at y=0)
+- Animation: play/pause/reset with FPS and speed controls (stops exactly at y=0)
+- Preset: one‑click classroom example
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ class PMRun:
     angle_deg: float  # degrees
     h0: float       # m
     g: float        # m/s^2
-    T: float        # s (user-selected max duration; plots/anim trim to touchdown)
+    T: float        # s (duration used for plots/animation)
     note: str = ""
 
     def label(self) -> str:
@@ -48,6 +49,14 @@ def time_of_flight(v0: float, angle_deg: float, h0: float, g: float) -> float:
     if disc < 0 or g <= 0:
         return 0.0
     return (v0y + np.sqrt(disc)) / g  # positive root
+
+
+def time_grid(t_end: float, dt: float) -> np.ndarray:
+    """Build a timeline that always includes t=0 and t=t_end exactly, avoiding off‑by‑dt issues."""
+    if t_end <= 0:
+        return np.array([0.0])
+    n = max(1, int(np.floor(t_end / dt)))
+    return np.linspace(0.0, t_end, n + 1)
 
 
 def kinematics(v0: float, angle_deg: float, h0: float, g: float, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray, float, float]:
@@ -74,7 +83,15 @@ def app(data: Optional[dict] = None):
 
     with st.expander("What this shows", expanded=False):
         st.markdown(
-            "This module visualizes a projectile launched with speed v0 at angle theta from height h0 under constant gravity g."
+            r"""
+**Purpose.** Visualize projectiles launched with speed $v_0$ at angle $\theta$ from height $h_0$ under constant gravity $g$.
+
+**Equations used**
+- $x(t) = v_0\cos\theta\; t$
+- $y(t) = h_0 + v_0\sin\theta\; t - \tfrac{1}{2}gt^2$
+- $t_{\text{flight}} = \dfrac{v_0\sin\theta + \sqrt{(v_0\sin\theta)^2 + 2gh_0}}{g}$
+- $\text{range} = v_0\cos\theta\; t_{\text{flight}}$
+            """
         )
 
     # --- Presets row ---
@@ -106,7 +123,7 @@ def app(data: Optional[dict] = None):
     d = st.session_state.pm_defaults
 
     if data:  # Prefill from AI extraction if provided
-        st.info("Using AI-extracted values where available. You can still adjust sliders.")
+        st.info("Using AI‑extracted values where available. You can still adjust sliders.")
         st.session_state.v0 = float(data.get("initial_velocity", d["v0"]))
         st.session_state.angle = float(data.get("angle", d["angle"]))
         st.session_state.h0 = float(data.get("height", d["h0"]))
@@ -117,37 +134,41 @@ def app(data: Optional[dict] = None):
         "Initial speed, v0 (m/s)", 0.0, 100.0, float(st.session_state.get("v0", d["v0"])), step=0.1, key="v0"
     )
     angle = st.slider(
-        "Launch angle, θ (degrees)", 0.0, 90.0, float(st.session_state.get("angle", d["angle"])), step=0.1, key="angle"
+        "Launch angle, θ (degrees)", 0.0, 90.0, float(st.session_state.get("angle", d["angle"])) , step=0.1, key="angle"
     )
 
     if launch_mode.startswith("From ground"):
         h0 = 0.0
     else:
         h0 = st.slider(
-            "Initial height, h0 (m)", 0.0, 50.0, float(st.session_state.get("h0", d["h0"])), step=0.1, key="h0"
+            "Initial height, h0 (m)", 0.0, 50.0, float(st.session_state.get("h0", d["h0"])) , step=0.1, key="h0"
         )
 
     g = st.slider(
-        "Gravity, g (m/s²)", 1.0, 20.0, float(st.session_state.get("g", d["g"])), step=0.01, key="g",
-        help="Use 9.81 for Earth, about 1.62 for Moon, about 3.71 for Mars"
+        "Gravity, g (m/s²)", 1.0, 20.0, float(st.session_state.get("g", d["g"])) , step=0.01, key="g",
+        help="Use 9.81 for Earth, ~1.62 for Moon, ~3.71 for Mars"
     )
 
     T = st.slider(
-        "Max duration, T (s) — plots/animation stop earlier if it lands",
-        0.1, 60.0, float(st.session_state.get("T", d["T"])), step=0.1, key="T"
+        "Duration, T (s)", 0.1, 60.0, float(st.session_state.get("T", d["T"])) , step=0.1, key="T"
     )
     dt = st.slider(
-        "Time step for plots (s)", 0.01, 0.5, 0.05, step=0.01, help="Smaller dt gives smoother curves (more points)."
+        "Time step for plots (s)", 0.01, 0.5, 0.05, step=0.01, help="Smaller dt → smoother curves (more points)."
     )
 
     # Save current as default for next open
     st.session_state.pm_defaults.update({"v0": v0, "angle": angle, "h0": h0, "g": g, "T": T})
 
-    # --- Compute (trim at touchdown) ---
+    # --- Compute (trim at touchdown and ensure exact landing sample) ---
     t_flight = time_of_flight(v0, angle, h0, g)
     t_end = min(T, t_flight) if t_flight > 0 else T
-    t = np.arange(0.0, t_end + 1e-12, dt)
+    t = time_grid(t_end, dt)
+
     x, y, vx, v0y = kinematics(v0, angle, h0, g, t)
+    # snap last point exactly to ground contact
+    x[-1] = vx * t_end
+    y[-1] = 0.0
+
     rng = vx * t_flight
     h_max = max_height(v0, angle, h0, g)
 
@@ -193,8 +214,9 @@ def app(data: Optional[dict] = None):
     for r in st.session_state.pm_runs:
         tf_r = time_of_flight(r.v0, r.angle_deg, r.h0, r.g)
         t_end_r = min(r.T, tf_r) if tf_r > 0 else r.T
-        tt = np.arange(0.0, t_end_r + 1e-12, dt)
-        xx, yy, _, _ = kinematics(r.v0, r.angle_deg, r.h0, r.g, tt)
+        tt = time_grid(t_end_r, dt)
+        xx, yy, vxx, _ = kinematics(r.v0, r.angle_deg, r.h0, r.g, tt)
+        xx[-1] = vxx * t_end_r
         ax1.plot(tt, xx, linestyle="--", label=r.label())
     _styled_axes(ax1, "time t (s)", "x position (m)")
     ax1.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.)
@@ -206,8 +228,9 @@ def app(data: Optional[dict] = None):
     for r in st.session_state.pm_runs:
         tf_r = time_of_flight(r.v0, r.angle_deg, r.h0, r.g)
         t_end_r = min(r.T, tf_r) if tf_r > 0 else r.T
-        tt = np.arange(0.0, t_end_r + 1e-12, dt)
-        xx, yy, _, _ = kinematics(r.v0, r.angle_deg, r.h0, r.g, tt)
+        tt = time_grid(t_end_r, dt)
+        xx, yy, vxx, _ = kinematics(r.v0, r.angle_deg, r.h0, r.g, tt)
+        yy[-1] = 0.0
         ax2.plot(tt, yy, linestyle="--", label=r.label())
     _styled_axes(ax2, "time t (s)", "y height (m)")
     ax2.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.)
@@ -219,16 +242,19 @@ def app(data: Optional[dict] = None):
     for r in st.session_state.pm_runs:
         tf_r = time_of_flight(r.v0, r.angle_deg, r.h0, r.g)
         t_end_r = min(r.T, tf_r) if tf_r > 0 else r.T
-        tt = np.arange(0.0, t_end_r + 1e-12, dt)
-        xx, yy, _, _ = kinematics(r.v0, r.angle_deg, r.h0, r.g, tt)
+        tt = time_grid(t_end_r, dt)
+        xx, yy, vxx, _ = kinematics(r.v0, r.angle_deg, r.h0, r.g, tt)
+        xx[-1] = vxx * t_end_r
+        yy[-1] = 0.0
         ax3.plot(xx, yy, linestyle="--", label=r.label())
+    # ground line at y=0
     ax3.axhline(0.0, color="black", linewidth=1)
     _styled_axes(ax3, "x (m)", "y (m)")
     ax3.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.)
     st.pyplot(fig3, use_container_width=True)
 
     # --- Animation ---
-    st.subheader("Animation: 2D Flight (stops at ground)")
+    st.subheader("Animation: 2D Flight")
     an_c1, an_c2, an_c3, an_c4 = st.columns([1, 1, 1, 2])
     with an_c1:
         if st.button("▶ Play", use_container_width=True):
@@ -242,7 +268,7 @@ def app(data: Optional[dict] = None):
             st.session_state.pm_anim_running = False
     with an_c4:
         fps = st.slider("Playback FPS", 5, 60, 30)
-        speed = st.selectbox("Speed", [0.25, 0.5, 1.0, 1.5, 2.0], index=2, help="1.0× is roughly real-time if dt is near 1/fps")
+        speed = st.selectbox("Speed", [0.25, 0.5, 1.0, 1.5, 2.0], index=2, help="1.0× ≈ real-time if dt ≈ 1/fps")
 
     # Determine nice bounds
     x_max = float(np.max(x))
@@ -252,9 +278,11 @@ def app(data: Optional[dict] = None):
     xlim = (0.0, max(1.0, x_max + x_pad))
     ylim = (0.0, max(1.0, y_max + y_pad))
 
-    # Animation timeline trimmed at landing as well
-    t_anim = np.arange(0.0, t_end + 1e-12, dt)
-    x_anim, y_anim, _, _ = kinematics(v0, angle, h0, g, t_anim)
+    # Animation timeline trimmed at touchdown and snapped
+    t_anim = time_grid(t_end, dt)
+    x_anim, y_anim, vx_anim, _ = kinematics(v0, angle, h0, g, t_anim)
+    x_anim[-1] = vx_anim * t_end
+    y_anim[-1] = 0.0
 
     def draw_frame(idx: int):
         idx = max(0, min(idx, len(t_anim) - 1))
