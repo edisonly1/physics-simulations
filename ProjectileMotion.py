@@ -52,11 +52,10 @@ def time_of_flight(v0: float, angle_deg: float, h0: float, g: float) -> float:
 
 
 def time_grid(t_end: float, dt: float) -> np.ndarray:
-    """Build a timeline that always includes t=0 and t=t_end exactly, avoiding off‑by‑dt issues."""
-    if t_end <= 0:
-        return np.array([0.0])
-    n = max(1, int(np.floor(t_end / dt)))
-    return np.linspace(0.0, t_end, n + 1)
+    times = list(np.arange(0.0, t_end, dt))
+    if not np.isclose(times[-1], t_end):
+        times.append(t_end)
+    return np.array(times)
 
 
 def kinematics(v0: float, angle_deg: float, h0: float, g: float, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray, float, float]:
@@ -268,7 +267,12 @@ def app(data: Optional[dict] = None):
             st.session_state.pm_anim_running = False
     with an_c4:
         fps = st.slider("Playback FPS", 5, 60, 30)
-        speed = st.selectbox("Speed", [0.25, 0.5, 1.0, 1.5, 2.0], index=2, help="1.0× ≈ real-time if dt ≈ 1/fps")
+        speed = st.selectbox(
+        "Speed",
+        [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0],
+        index=2,
+        help="1.0× ≈ real-time if dt ≈ 1/fps"
+)
 
     # Determine nice bounds
     x_max = float(np.max(x))
