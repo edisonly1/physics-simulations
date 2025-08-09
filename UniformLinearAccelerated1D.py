@@ -8,7 +8,6 @@ Features
 - Graphs: position–time, velocity–time, acceleration–time
 - Overlay multiple runs for comparison
 - One‑click classroom example: car accelerates from rest at 3 m/s^2 for 5 s
-
 """
 from __future__ import annotations
 
@@ -81,7 +80,11 @@ def app():
             st.session_state.a = 3.0
             st.session_state.T = 5.0
             st.session_state.u1d_defaults.update({"u": 0.0, "a": 3.0, "T": 5.0})
-            st.experimental_rerun()
+            # Streamlit changed experimental_rerun() → rerun() in newer versions
+            if hasattr(st, "rerun"):
+                st.rerun()
+            elif hasattr(st, "experimental_rerun"):
+                st.experimental_rerun()
     with c2:
         if st.button("Reset overlays"):
             st.session_state.u1d_runs = []
@@ -223,3 +226,6 @@ def app():
     st.pyplot(fig3, use_container_width=True)
 
 
+# If run directly (for quick testing):
+if __name__ == "__main__":
+    app()
