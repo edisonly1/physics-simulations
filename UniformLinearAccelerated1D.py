@@ -6,11 +6,13 @@ Features
 - Sliders: initial velocity (u), acceleration (a), duration (T), time step (dt)
 - Outputs: s(T) = uT + 1/2 aT^2,  v(T) = u + aT
 - Graphs: position–time, velocity–time, acceleration–time
+- NEW: Simple 1D animation of the object's motion along a track with live readouts
 - Overlay multiple runs for comparison
 - One‑click classroom example: car accelerates from rest at 3 m/s^2 for 5 s
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import List
 
@@ -44,6 +46,9 @@ def _ensure_session_state():
         st.session_state.u1d_runs: List[Run] = []
     if "u1d_defaults" not in st.session_state:
         st.session_state.u1d_defaults = {"u": 0.0, "a": 0.0, "T": 5.0}
+    # Animation state
+    st.session_state.setdefault("u1d_anim_running", False)
+    st.session_state.setdefault("u1d_anim_idx", 0)
 
 
 # --------------------------- UI --------------------------- #
@@ -200,6 +205,69 @@ def app():
     _styled_axes(ax3, "time t (s)", "acceleration a (m/s²)")
     ax3.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.)
     st.pyplot(fig3, use_container_width=True)
+
+    # --- Animation ---
+    st.subheader("Animation: 1D Motion Along a Track")
+    an_c1, an_c2, an_c3, an_c4 = st.columns([1,1,1,2])
+    with an_c1:
+        if st.button("▶ Play", use_container_width=True):
+            st.session_state.u1d_anim_running = True
+    with an_c2:
+        if st.button("⏸ Pause", use_container_width=True):
+            st.session_state.u1d_anim_running = False
+    with an_c3:
+        if st.button("⟲ Reset", use_container_width=True):
+            st.session_state.u1d_anim_idx = 0
+            st.session_state.u1d_anim_running = False
+    with an_c4:
+        fps = st.slider("Playback FPS", 5, 60, 30)
+        speed = st.selectbox("Speed", [0.25, 0.5, 1.0, 1.5, 2.0], index=2, help="1.0× = real-time if dt ≈ 1/fps")
+
+    # Determine spatial bounds from the trajectory for nice framing
+    s_min = float(np.min(s))
+    s_max = float(np.max(s))
+    if s_min == s_max:
+        s_min -= 1.0
+        s_max += 1.0
+    pad = 0.05 * (s_max - s_min)
+    s_min -= pad
+    s_max += pad
+
+    # Draw one frame helper
+    def draw_frame(idx: int):
+        idx = max(0, min(idx, len(t)-1))
+        s_now, v_now, a_now, t_now = s[idx], v[idx], a_arr[idx], t[idx]
+        fig, ax = plt.subplots(figsize=(8, 1.8))
+        ax.plot([s_min, s_max], [0, 0], linewidth=3)
+        ax.scatter([s_now], [0], s=120, zorder=3)
+        ax.set_xlim(s_min, s_max)
+        ax.set_ylim(-1, 1)
+        ax.set_yticks([])
+        ax.set_xlabel("position s (m)")
+        ax.set_title(f"t = {t_now:.2f} s | s = {s_now:.2f} m | v = {v_now:.2f} m/s | a = {a_now:.2f} m/s²")
+        ax.spines["left"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["top"].set_visible(False)
+        return fig
+
+    placeholder = st.empty()
+
+    # Always render current frame (even if not playing)
+    placeholder.pyplot(draw_frame(st.session_state.u1d_anim_idx), use_container_width=True)
+
+    # Play loop (blocking until done or paused)
+    if st.session_state.u1d_anim_running:
+        start = st.session_state.u1d_anim_idx
+        step = max(1, int(round(speed * (1.0 / max(dt, 1e-6)) / fps)))
+        for i in range(start, len(t)):
+            placeholder.pyplot(draw_frame(i), use_container_width=True)
+            st.session_state.u1d_anim_idx = i
+            time.sleep(1.0 / fps)
+            if not st.session_state.u1d_anim_running:
+                break
+        else:
+            # reached the end
+            st.session_state.u1d_anim_running = False
 
 
 if __name__ == "__main__":
