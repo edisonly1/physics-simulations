@@ -11,7 +11,6 @@ Features
 """
 from __future__ import annotations
 
-import io
 from dataclasses import dataclass
 from typing import List
 
@@ -34,12 +33,6 @@ class Run:
 
 # --------------------------- Helpers --------------------------- #
 def kinematics(u: float, a: float, t: np.ndarray):
-    """Return s(t), v(t), a(t) arrays for 1D constant‑acceleration motion.
-
-    s(t) = u t + 1/2 a t^2
-    v(t) = u + a t
-    a(t) = constant (a)
-    """
     s = u * t + 0.5 * a * t**2
     v = u + a * t
     a_arr = np.full_like(t, a)
@@ -80,7 +73,6 @@ def app():
             st.session_state.a = 3.0
             st.session_state.T = 5.0
             st.session_state.u1d_defaults.update({"u": 0.0, "a": 3.0, "T": 5.0})
-            # Streamlit changed experimental_rerun() → rerun() in newer versions
             if hasattr(st, "rerun"):
                 st.rerun()
             elif hasattr(st, "experimental_rerun"):
@@ -156,24 +148,8 @@ def app():
         st.latex(r"v(T) = u + aT")
         st.metric(label="Velocity at T", value=f"{vT:.3f} m/s")
 
-    # CSV download for current run
-    csv_buf = io.StringIO()
-    np.savetxt(
-        csv_buf,
-        np.column_stack([t, s, v, a_arr]),
-        delimiter=",",
-        header="t,s,v,a",
-        comments="",
-    )
-    st.download_button(
-        "Download CSV (current run)",
-        data=csv_buf.getvalue(),
-        file_name="uniform_1d_run.csv",
-        mime="text/csv",
-    )
-
     # --- Overlay buttons ---
-    oc1, oc2 = st.columns([1, 3])
+    oc1, _ = st.columns([1, 3])
     with oc1:
         note = st.text_input("Label for this run (optional)", value="")
         if st.button("Add to overlay"):
@@ -226,6 +202,5 @@ def app():
     st.pyplot(fig3, use_container_width=True)
 
 
-# If run directly (for quick testing):
 if __name__ == "__main__":
     app()
