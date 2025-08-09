@@ -1,7 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import streamlit as st
-import matplotlib.lines as mlines
+import numpy as np # type: ignore
+import matplotlib.pyplot as plt # type: ignore
+import streamlit as st # type: ignore
+import matplotlib.lines as mlines # type: ignore
 
 def draw_incline_fbd(
     angle_deg=30,
