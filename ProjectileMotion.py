@@ -271,10 +271,10 @@ def app(data: Optional[dict] = None):
             st.session_state.pm_anim_t = 0.0         # continuous sim time
             st.session_state.pm_anim_running = False
     with an_c4:
-        fps = st.slider("Playback FPS", 5, 60, 30)
+        fps = 60
         speed = st.selectbox(
             "Speed",
-            [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0],
+            [0.25, 0.5, 1.0, 1.5, 2.0],
             index=2,
             help="Sim time per frame ≈ speed / fps (independent of dt)."
         )
