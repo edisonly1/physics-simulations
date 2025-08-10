@@ -7,7 +7,7 @@ from __future__ import annotations
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle, FancyArrow
+from matplotlib.patches import Rectangle, FancyArrowPatch
 import streamlit as st
 
 
@@ -240,27 +240,29 @@ def app():
     block = Rectangle((bx - block_w/2, by - block_h/2), block_w, block_h, linewidth=1.5, edgecolor='k', facecolor='none')
     axA.add_patch(block)
 
-    # Force arrows (we'll update these)
-    # Applied
-    arr_app = FancyArrow(0, 0, 0, 0, width=0.02, length_includes_head=True)
-    axA.add_patch(arr_app)
-    # Friction
-    arr_fric = FancyArrow(0, 0, 0, 0, width=0.02, length_includes_head=True)
-    axA.add_patch(arr_fric)
-    # Normal & Weight (draw simplified, vertical for horizontal case; perpendicular for slope)
-    arr_N = FancyArrow(0, 0, 0, 0, width=0.02, length_includes_head=True)
-    axA.add_patch(arr_N)
-    arr_W = FancyArrow(0, 0, 0, 0, width=0.02, length_includes_head=True)
-    axA.add_patch(arr_W)
+    arr_app = make_arrow(axA)
+    arr_fric = make_arrow(axA)
+    arr_N    = make_arrow(axA)
+    arr_W    = make_arrow(axA)
+
 
     status_text = axA.text(track_len*0.55, 1.30, "", fontsize=12, fontweight='bold')
 
     # helper to draw/update an arrow from (x,y) along unit (ux,uy) with magnitude scaled visually
-    def update_arrow(arrow, x, y, ux, uy, magnitude, scale=0.003):
+
+
+    def make_arrow(ax):
+        a = FancyArrowPatch((0, 0), (0, 0), arrowstyle='-|>', mutation_scale=18, linewidth=2)
+        ax.add_patch(a)
+        return a
+
+    def update_arrow(arrow, x, y, ux, uy, magnitude, scale=0.004):
+        # Draw arrow from (x,y) to (x+L*ux, y+L*uy)
         L = abs(magnitude) * scale
         if magnitude < 0:
             ux, uy = -ux, -uy
-        arrow.set_positions(x, y, L*ux, L*uy)
+        arrow.set_positions((x, y), (x + L*ux, y + L*uy))
+
 
     # One static render (initial)
     st.pyplot(figA)  # first draw (blank state)
@@ -297,11 +299,11 @@ def app():
         block = Rectangle((0, 0), block_w, block_h, linewidth=1.5, edgecolor='k', facecolor='none')
         axA.add_patch(block)
 
-        arr_app = FancyArrow(0, 0, 0, 0, width=0.02, length_includes_head=True)
-        arr_fric = FancyArrow(0, 0, 0, 0, width=0.02, length_includes_head=True)
-        arr_N   = FancyArrow(0, 0, 0, 0, width=0.02, length_includes_head=True)
-        arr_W   = FancyArrow(0, 0, 0, 0, width=0.02, length_includes_head=True)
-        axA.add_patch(arr_app); axA.add_patch(arr_fric); axA.add_patch(arr_N); axA.add_patch(arr_W)
+        arr_app = make_arrow(axA)
+        arr_fric = make_arrow(axA)
+        arr_N    = make_arrow(axA)
+        arr_W    = make_arrow(axA)
+
         status_text = axA.text(track_len*0.55, 1.30, "", fontsize=12, fontweight='bold')
 
         # Render frames at fixed FPS by skipping/merging sim steps
