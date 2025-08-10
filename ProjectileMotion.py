@@ -53,10 +53,13 @@ def time_of_flight(v0: float, angle_deg: float, h0: float, g: float) -> float:
 
 
 def time_grid(t_end: float, dt: float) -> np.ndarray:
+    if t_end <= 0:
+        return np.array([0.0], dtype=float)
     times = list(np.arange(0.0, t_end, dt))
     if not np.isclose(times[-1], t_end):
         times.append(t_end)
-    return np.array(times)
+    return np.array(times, dtype=float)
+
 
 
 def kinematics(v0: float, angle_deg: float, h0: float, g: float, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray, float, float]:
@@ -272,21 +275,16 @@ def app(data: Optional[dict] = None):
             st.session_state.pm_anim_t = 0.0         # continuous sim time
             st.session_state.pm_anim_running = False
     with an_c4:
-        fps = 60
+        fps = 60  # fixed for smoothness
         speed = st.selectbox(
             "Speed",
-            [0.25, 0.5, 1.0, 1.5, 2.0],
+            [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0],
             index=2,
             help="Sim time per frame ≈ speed / fps (independent of dt)."
         )
         show_vec = st.checkbox("Show velocity vector", value=True)
-        # Optional: if you want a size knob too, uncomment next line
-        # vec_scale = st.slider("Vector scale", 0.05, 0.30, 0.12, 0.01, help="Arrow length as a fraction of axis range")
-        vec_scale = 0.12  # fixed scale: ~12% of max axis span
         show_components = st.checkbox("Show vx/vy components", value=False)
-        # then call:
-        fig0 = draw_time(st.session_state.pm_anim_t, show_vec=show_vec, show_components=show_components)
-
+        vec_scale = 0.12  # arrow length as a fraction of axis span
 
     # Ensure state var exists
     if "pm_anim_t" not in st.session_state:
@@ -294,7 +292,9 @@ def app(data: Optional[dict] = None):
 
     # Precompute fixed-resolution full path (independent of dt)
     N_FULL = 500
-    t_full, x_full, y_full = sample_path(vx, v0y, h0, g, 0.0, t_end, N_FULL)
+    t_full = np.linspace(0.0, max(t_end, 0.0), max(2, N_FULL))
+    x_full = vx * t_full
+    y_full = h0 + v0y * t_full - 0.5 * g * t_full**2
     x_full[-1], y_full[-1] = vx * t_end, 0.0  # snap touchdown
 
     # Fixed axes so the view doesn't jump
@@ -305,19 +305,16 @@ def app(data: Optional[dict] = None):
     xlim = (0.0, max(1.0, x_max + x_pad))
     ylim = (0.0, max(1.0, y_max + y_pad))
 
-    def draw_time(t_now: float, show_vec=True, show_components=False, vec_scale=0.12):
-        """
-        Draw frame at arbitrary simulation time t_now (continuous).
-        show_vec: draw net velocity vector
-        show_components: draw vx and vy components as separate arrows
-        vec_scale: arrow length as a fraction of the larger axis span
-        """
+    def draw_time(t_now: float):
+        from matplotlib.patches import FancyArrowPatch  # local import is fine
         t_now = float(np.clip(t_now, 0.0, t_end))
 
-        # Path-so-far (fixed resolution; independent of dt)
+        # Path‑so‑far with fixed resolution (independent of dt)
         frac = 0.0 if t_end <= 0 else (t_now / t_end)
         n_so_far = max(2, int(round(N_FULL * max(0.0, min(1.0, frac)))))
-        _, x_sf, y_sf = sample_path(vx, v0y, h0, g, 0.0, t_now, n_so_far)
+        t_sf = np.linspace(0.0, t_now, n_so_far)
+        x_sf = vx * t_sf
+        y_sf = h0 + v0y * t_sf - 0.5 * g * t_sf**2
 
         # Current position & instantaneous velocity
         x_now = vx * t_now
@@ -332,7 +329,6 @@ def app(data: Optional[dict] = None):
         ax.scatter([x_now], [y_now], s=80, zorder=3)
         ax.axhline(0.0, color="black", linewidth=1)
 
-        # fixed axes you computed earlier
         ax.set_xlim(*xlim)
         ax.set_ylim(*ylim)
         ax.set_xlabel("x (m)")
@@ -342,12 +338,10 @@ def app(data: Optional[dict] = None):
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
-        # ---- Velocity arrows ----
+        # Velocity arrows
         if show_vec or show_components:
             span = max(xlim[1] - xlim[0], ylim[1] - ylim[0])
-            L = vec_scale * span   # base arrow length
-
-            # Net velocity
+            L = vec_scale * span
             if show_vec:
                 dx = (vx_now / speed_mag) * L
                 dy = (vy_now / speed_mag) * L
@@ -355,34 +349,34 @@ def app(data: Optional[dict] = None):
                     (x_now, y_now), (x_now + dx, y_now + dy),
                     arrowstyle="->", mutation_scale=18, linewidth=2, color="tab:green", zorder=4
                 ))
-                ax.text(x_now + dx, y_now + dy, " v", fontsize=10, color="tab:green", va="bottom", ha="left")
+                ax.text(x_now + dx, y_now + dy, " v", fontsize=10, color="tab:green",
+                        va="bottom", ha="left")
 
-            # Components (optional)
             if show_components:
-                # vx component (horizontal)
                 sign_x = 1.0 if vx_now >= 0 else -1.0
+                sign_y = 1.0 if vy_now >= 0 else -1.0
                 ax.add_patch(FancyArrowPatch(
                     (x_now, y_now), (x_now + sign_x * L, y_now),
                     arrowstyle="->", mutation_scale=16, linewidth=1.8, color="tab:blue", zorder=4
                 ))
-                ax.text(x_now + sign_x * L, y_now, " vx", fontsize=9, color="tab:blue", va="bottom", ha="left")
-
-                # vy component (vertical)
-                sign_y = 1.0 if vy_now >= 0 else -1.0
+                ax.text(x_now + sign_x * L, y_now, " vx", fontsize=9, color="tab:blue",
+                        va="bottom", ha="left")
                 ax.add_patch(FancyArrowPatch(
                     (x_now, y_now), (x_now, y_now + sign_y * L),
                     arrowstyle="->", mutation_scale=16, linewidth=1.8, color="tab:red", zorder=4
                 ))
-                ax.text(x_now, y_now + sign_y * L, " vy", fontsize=9, color="tab:red", va="bottom", ha="left")
+                ax.text(x_now, y_now + sign_y * L, " vy", fontsize=9, color="tab:red",
+                        va="bottom", ha="left")
 
         return fig
 
     placeholder = st.empty()
+    # Initial render AFTER draw_time is defined
     fig0 = draw_time(st.session_state.pm_anim_t)
     placeholder.pyplot(fig0, use_container_width=True)
     plt.close(fig0)
 
-    # Advance time by speed/fps per frame (no dt dependence)
+    # Play loop: advance continuous time by speed/fps per frame
     if st.session_state.pm_anim_running:
         dt_frame = float(speed) / float(fps)
         while st.session_state.pm_anim_running and st.session_state.pm_anim_t < t_end - 1e-9:
@@ -393,6 +387,7 @@ def app(data: Optional[dict] = None):
             time.sleep(1.0 / fps)
         else:
             st.session_state.pm_anim_running = False
+
 
 
 if __name__ == "__main__":
