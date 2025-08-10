@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-G_DEFAULT = 10
+G_DEFAULT = 10.0
 
 def _accel_full(m1, m2, g, use_inertia=False, pulley_mass=0.0, pulley_radius=0.1):
     """
