@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-G_DEFAULT = 9.8
+G_DEFAULT = 10
 
 def _accel_full(m1, m2, g, use_inertia=False, pulley_mass=0.0, pulley_radius=0.1):
     """
@@ -75,64 +75,97 @@ def _anim_header():
         sim_time = st.slider("Max sim time (s)", 2.0, 20.0, 8.0, 0.5)
     return fps, sim_time
 
-def _animate_full(a, y0_left=0.6, y0_right=0.2, pulley_y=0.9, floor_y=0.05,
-                  fps=30, sim_time=6.0, scale=0.15, direction_down_right=True):
+def _animate_full(
+    a,
+    fps=30,
+    sim_time=6.0,
+    m2_heavier=True,
+    # visual geometry (feel free to tweak)
+    pulley_x=0.5, pulley_y=0.88, pulley_R=0.06,
+    floor_y=0.08, block_w=0.10, block_h=0.08,
+    y_left0=0.55, y_right0=0.35
+):
     """
-    Simple 2D schematic: left and right masses on either side of a pulley.
-    Stops if a mass hits floor or time ends.
+    Full Atwood visual like BYJU's:
+    - pulley centered at top
+    - two vertical rope legs straight down from pulley rim
+    - blocks directly under the pulley, labeled M1 / M2
+    Stops when a block hits the floor or the upper block reaches the pulley.
     """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import time
+
     dt = 1.0 / fps
-    # choose sign so that if a>0 then right mass goes down (m2>m1 typical)
-    sgn = 1 if direction_down_right else -1
+    # sign convention: if m2 is heavier, right side goes down, left goes up
+    sgn = 1 if m2_heavier else -1
 
-    # Rope length -> displacements equal magnitude and opposite sign
+    # constant x-positions of the two rope legs (exactly under pulley rim)
+    x_left = pulley_x - pulley_R
+    x_right = pulley_x + pulley_R
+
+    # hard limits so blocks don't overlap pulley or floor
+    top_stop = pulley_y - pulley_R - 0.02
+    min_y = floor_y + block_h / 2
+    max_y = top_stop - block_h / 2
+
+    # start
     t = 0.0
-    v = 0.0
-    s = 0.0
-
     ph = st.empty()
+
     while t <= sim_time:
         s = 0.5 * sgn * a * t**2
-        # positions (clamp at floor/top)
-        y_left = np.clip(y0_left + s, floor_y + scale/2, pulley_y - scale/2)
-        y_right = np.clip(y0_right - s, floor_y + scale/2, pulley_y - scale/2)
+        y_left = np.clip(y_left0 + s, min_y, max_y)    # left goes up if m2_heavier
+        y_right = np.clip(y_right0 - s, min_y, max_y)  # right goes down if m2_heavier
 
-        # Stop if either hits limit
-        if (y_left <= floor_y + scale/2 + 1e-4) or (y_right <= floor_y + scale/2 + 1e-4):
-            pass_flag = True
-        else:
-            pass_flag = False
+        hit_limit = (y_right <= min_y + 1e-4) or (y_left >= max_y - 1e-4)
 
-        fig, ax = plt.subplots(figsize=(6,4))
+        fig, ax = plt.subplots(figsize=(7, 4))
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
         ax.axis("off")
 
-        # Pulley
-        pulley_x = 0.5
-        circle = plt.Circle((pulley_x, pulley_y), 0.05, fill=False, lw=2)
-        ax.add_patch(circle)
+        # ceiling beam and support (simple triangle)
+        ax.plot([0.2, 0.8], [0.98, 0.98], lw=5, color="#7d3c98")
+        support = plt.Polygon(
+            [[pulley_x - 0.06, 0.98], [pulley_x + 0.06, 0.98], [pulley_x, pulley_y + 0.02]],
+            closed=True, fc="#5b5b5b", ec="k", lw=1.5
+        )
+        ax.add_patch(support)
 
-        # Rope lines
-        ax.plot([pulley_x, 0.2], [pulley_y, y_left + scale/2], lw=2)
-        ax.plot([pulley_x, 0.8], [pulley_y, y_right + scale/2], lw=2)
+        # pulley (two circles)
+        outer = plt.Circle((pulley_x, pulley_y), pulley_R, ec="k", fc="#d0d0d0", lw=2)
+        inner = plt.Circle((pulley_x, pulley_y), pulley_R * 0.55, ec="k", fc="#bfbfbf", lw=1)
+        ax.add_patch(outer); ax.add_patch(inner)
 
-        # Mass blocks
-        rect1 = plt.Rectangle((0.15, y_left - scale/2), 0.1, scale, ec='k', fc='lightgray')
-        rect2 = plt.Rectangle((0.75, y_right - scale/2), 0.1, scale, ec='k', fc='lightgray')
+        # rope arc over the pulley (semi-circle)
+        th = np.linspace(np.pi/2, 3*np.pi/2, 100)
+        ax.plot(pulley_x + pulley_R*np.cos(th), pulley_y + pulley_R*np.sin(th),
+                lw=4, color="#f1c40f")
+
+        # two vertical rope legs
+        ax.plot([x_left, x_left],   [pulley_y, y_left + block_h/2],  lw=4, color="#f1c40f")
+        ax.plot([x_right, x_right], [pulley_y, y_right + block_h/2], lw=4, color="#f1c40f")
+
+        # blocks directly under rope legs
+        rect1 = plt.Rectangle((x_left - block_w/2,  y_left - block_h/2),
+                              block_w, block_h, ec="k", fc="#c9c9c9", lw=2)
+        rect2 = plt.Rectangle((x_right - block_w/2, y_right - block_h/2),
+                              block_w, block_h, ec="k", fc="#c9c9c9", lw=2)
         ax.add_patch(rect1); ax.add_patch(rect2)
 
-        # Floor
-        ax.plot([0,1],[floor_y,floor_y],'k-', lw=2)
+        # labels
+        ax.text(x_left,  y_left,  "M1", ha="center", va="center", fontsize=12)
+        ax.text(x_right, y_right, "M2", ha="center", va="center", fontsize=12)
+        ax.text(0.06, 0.94, f"t = {t:0.2f} s", fontsize=12)
 
-        ax.text(0.15, y_left + scale + 0.02, "m₁", fontsize=12, ha='center')
-        ax.text(0.85, y_right + scale + 0.02, "m₂", fontsize=12, ha='center')
-        ax.text(0.02, 0.96, f"t = {t:0.2f} s", fontsize=10)
+        # floor under the right block (just for reference)
+        ax.plot([x_right - 0.12, x_right + 0.12], [floor_y, floor_y], 'k-', lw=2)
 
         ph.pyplot(fig, clear_figure=True)
         plt.close(fig)
 
-        if pass_flag:
+        if hit_limit:
             break
 
         time.sleep(dt)
@@ -240,7 +273,7 @@ def app():
         fps, sim_time = _anim_header()
         go = st.button("Run animation", type="primary")
         if go:
-            _animate_full(a, fps=fps, sim_time=sim_time, direction_down_right=(m2 >= m1))
+            _animate_full(a, fps=fps, sim_time=sim_time, m2_heavier=(m2 >= m1))
 
         with st.expander("Classroom tips"):
             st.write("- Have students predict direction by comparing \(m_2\) and \(m_1\).")
