@@ -57,4 +57,4 @@ elif page == "Free Fall":
 
 elif page == "Newton's Second Law":
     st.title("Newton's Second Law Simulation")
-    NewtonsSecondLaw.py.app()
+    NewtonsSecondLaw.app()
