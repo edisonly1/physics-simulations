@@ -33,7 +33,7 @@ page = st.sidebar.selectbox(
 
 # ---- Pages ----
 if page == "Home":
-    st.title("Welcome to the Physics Simulation Lab! 🧪")
+    st.title("Welcome to the Physics Simulation Lab!")
     st.markdown("""
 This is a classroom-friendly simulator with variable selectors.
 

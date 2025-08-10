@@ -81,7 +81,7 @@ def draw_track_and_carts(x1, x2, L, w=1.0, h=0.45) -> plt.Figure:
 
 # ---------------- Streamlit App ----------------
 def app():
-    st.title("Elastic / Inelastic Collisions (1D) — Animation with Restitution e")
+    st.title("Elastic / Inelastic Collisions (1D)")
 
     with st.expander("Show equations"):
         st.latex(r"p:\ m_1u_1+m_2u_2=m_1v_1+m_2v_2")
@@ -152,9 +152,9 @@ def app():
 
     # Controls
     play_col, reset_col, _ = st.columns([0.25, 0.25, 0.5])
-    if play_col.button("▶️ Play" if not st.session_state.playing else "⏸ Pause"):
+    if play_col.button("Play" if not st.session_state.playing else "Pause"):
         st.session_state.playing = not st.session_state.playing
-    if reset_col.button("↺ Reset"):
+    if reset_col.button("Reset"):
         st.session_state.t = 0.0
         st.session_state.x1 = 0.8
         st.session_state.x2 = min(st.session_state.x1 + separation, L - 0.8)
@@ -190,7 +190,7 @@ def app():
         frame.pyplot(fig, use_container_width=True)
         time.sleep(base_dt * 0.85)
 
-    st.caption("Contact is resolved at the exact hit time each frame, so blocks never overlap. "
+    st.caption(
                "Choose **Partially Inelastic** to explore any 0 ≤ e ≤ 1.")
     
 # Standalone run
