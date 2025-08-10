@@ -6,7 +6,6 @@ from matplotlib.patches import FancyArrowPatch
 import tempfile
 
 def app(data=None):
-    st.title("Animated Free Fall Simulator")
 
     if data:
         v0 = float(data.get("initial_velocity", 0))
