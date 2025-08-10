@@ -156,7 +156,7 @@ def app(data: Optional[dict] = None):
     T = st.slider(
         "Duration, T (s)", 0.1, 60.0, float(st.session_state.get("T", d["T"])) , step=0.1, key="T"
     )
-    dt = 0.5  # fixed plot timestep (s); no slider
+    dt = 0.05  # fixed plot timestep (s); no slider
 
 
     # Save current as default for next open
