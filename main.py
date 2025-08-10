@@ -18,7 +18,8 @@ page = st.sidebar.selectbox(
         "Projectile Motion",
         "Inclined Plane",
         "Free Fall",
-        "Newton's Second Law"
+        "Newton's Second Law",
+        "Friction Models",
     ],
 )
 
