@@ -6,7 +6,6 @@ import tempfile
 from InclineFBD import draw_incline_fbd
 
 def app(data=None):
-    st.title("Inclined Plane Simulator (Animated)")
 
     g = 10.0  # gravity
 
