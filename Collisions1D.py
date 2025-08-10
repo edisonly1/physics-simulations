@@ -18,14 +18,6 @@ def final_velocities(m1: float, m2: float, u1: float, u2: float,
     v2 = (m1*u1 + m2*u2 + m1*e_used*(u1 - u2)) / (m1 + m2)
     return float(v1), float(v2), e_used
 
-<<<<<<< HEAD
-def build_custom_force(points_df: pd.DataFrame, total_time: float, dt: float):
-    df = points_df.copy()
-    df["t"] = df["t"].clip(lower=0.0, upper=max(1e-3, total_time))
-    df = df.sort_values("t", kind="mergesort").drop_duplicates(subset="t")
-    if df["t"].iloc[0] > 0.0: df = pd.concat([pd.DataFrame([{"t": 0.0, "F": 0.0}]), df], ignore_index=True)
-    if df["t"].iloc[-1] < total_time: df = pd.concat([df, pd.DataFrame([{"t": total_time, "F": 0.0}])], ignore_index=True)
-=======
 def step_no_overlap(x1, x2, v1, v2, m1, m2, mode, e, w, dt):
     vrel = v1 - v2
     gap = (x2 - w/2) - (x1 + w/2)
@@ -46,7 +38,6 @@ def step_no_overlap(x1, x2, v1, v2, m1, m2, mode, e, w, dt):
     x1 += v1 * dt
     x2 += v2 * dt
     return x1, x2, v1, v2, False
->>>>>>> parent of 02353c0 (Update Collisions1D.py)
 
 # ---------------- Drawing ----------------
 def draw_track_and_carts(x1, x2, L, w=1.0, h=0.45) -> plt.Figure:
@@ -70,22 +61,6 @@ def energy_bars(ke1_i, ke2_i, ke1_f, ke2_f) -> plt.Figure:
     fig, axs = plt.subplots(1, 2, figsize=(8, 3.8))
     labels = ["Cart 1", "Cart 2"]
 
-<<<<<<< HEAD
-    a = F / max(TOL, m)
-    dv = cumtrapz(a, t)
-    v = v0 + dv
-    x = cumtrapz(v, t)
-    p = m * v
-    return {"J_total": J_total, "J_contact": J_contact, "F_avg": F_avg, "v": v, "x": x, "p": p, "a": a}
-
-# ---------- plots ----------
-def plot_force_with_area(t, F, J):
-    fig, ax = plt.subplots(figsize=(7, 3.8))
-    ax.plot(t, F, lw=2, label="Force $F(t)$")
-    ax.fill_between(t, 0, F, alpha=0.25, label=f"Impulse area  J = {J:.3f} N·s")
-    ax.axhline(0, lw=1, color="#888"); ax.set_xlabel("time (s)"); ax.set_ylabel("force (N)")
-    ax.legend(loc="best"); ax.grid(alpha=0.25); fig.tight_layout(); return fig
-=======
     axs[0].bar(labels, [ke1_i, ke2_i])
     axs[0].set_title("Energy BEFORE")
     axs[0].set_ylabel("Kinetic Energy (J)")
@@ -100,7 +75,6 @@ def plot_force_with_area(t, F, J):
                         ha="center", va="bottom", fontsize=9)
     fig.tight_layout()
     return fig
->>>>>>> parent of 02353c0 (Update Collisions1D.py)
 
 def energy_pies(ke1_i, ke2_i, ke1_f, ke2_f) -> plt.Figure:
     """Optional: pies if you want them."""
@@ -177,38 +151,6 @@ def app():
         st.session_state.v2 = u2
         st.session_state.playing = False
 
-<<<<<<< HEAD
-        # -------- Animation with Play/Pause/Reset ----------
-        st.subheader("Animation: ball struck by force profile")
-
-        t_min, t_max = float(t[0]), float(t[-1])
-        step_time = float(max(dt, (t_max - t_min) / 200.0))
-
-        # session state
-        if "imp_t_now" not in st.session_state: st.session_state.imp_t_now = t_min
-        if "imp_is_playing" not in st.session_state: st.session_state.imp_is_playing = False
-        if "imp_speed" not in st.session_state: st.session_state.imp_speed = 1.0
-        # clamp if user changed time window
-        st.session_state.imp_t_now = float(np.clip(st.session_state.imp_t_now, t_min, t_max))
-
-        c1, c2, c3 = st.columns([1, 1, 2])
-        if not st.session_state.imp_is_playing:
-            if c1.button("Play", use_container_width=True):
-                st.session_state.imp_is_playing = True
-                st.rerun()
-        else:
-            if c1.button("Pause", use_container_width=True):
-                st.session_state.imp_is_playing = False
-                st.rerun()
-
-        if c2.button("Reset", use_container_width=True):
-            st.session_state.imp_t_now = t_min
-            st.session_state.imp_is_playing = False
-            st.rerun()
-
-        st.session_state.imp_speed = c3.select_slider(
-            "Speed", options=[0.25, 0.5, 1.0, 1.5, 2.0, 3.0], value=st.session_state.imp_speed
-=======
     x1 = st.session_state.x1
     x2 = st.session_state.x2
     v1 = st.session_state.v1
@@ -241,7 +183,6 @@ def app():
             x1, x2, v1, v2, m1, m2,
             "Partially Inelastic" if mode.startswith("Partially") else mode,
             e_slider, CART_W, dt
->>>>>>> parent of 02353c0 (Update Collisions1D.py)
         )
         x1 = float(np.clip(x1, 0.8, L - 0.8))
         x2 = float(np.clip(x2, 0.8, L - 0.8))
@@ -252,33 +193,6 @@ def app():
         frame.pyplot(fig, use_container_width=True)
         time.sleep(base_dt * 0.85)
 
-<<<<<<< HEAD
-        t_now = st.slider(
-            "Scrub time",
-            min_value=t_min, max_value=t_max,
-            value=float(st.session_state.imp_t_now),
-            step=step_time, format="%.3f", key="imp_scrubber"
-        )
-        st.session_state.imp_t_now = float(t_now)
-
-        st.pyplot(draw_ball_panel(t, x, v, st.session_state.imp_t_now), use_container_width=True)
-
-        if st.session_state.imp_is_playing:
-            time.sleep(0.016)  # ~60 FPS-ish
-            next_t = st.session_state.imp_t_now + st.session_state.imp_speed * step_time
-            if next_t >= t_max:
-                st.session_state.imp_t_now = t_max
-                st.session_state.imp_is_playing = False
-            else:
-                st.session_state.imp_t_now = float(next_t)
-            st.rerun()
-
-        st.markdown("*Shaded area under $F(t)$ is impulse $J$.  $\\Delta v = J/m$*")
-
-# Standalone
-if __name__ == "__main__":
-    st.set_page_config(page_title="Impulse–Momentum", layout="wide")
-=======
     # ---------- Energy charts (Before vs After) ----------
     ke1_i, ke2_i = 0.5 * m1 * u1**2, 0.5 * m2 * u2**2
     ke1_f, ke2_f = 0.5 * m1 * v1f**2, 0.5 * m2 * v2f**2
@@ -296,5 +210,4 @@ if __name__ == "__main__":
 # Standalone
 if __name__ == "__main__":
     st.set_page_config(page_title="1D Collisions", layout="wide")
->>>>>>> parent of 02353c0 (Update Collisions1D.py)
     app()
