@@ -123,14 +123,7 @@ def app():
         step=0.1,
         key="T",
     )
-    dt = st.slider(
-        "Time step for plots (s)",
-        min_value=0.01,
-        max_value=0.5,
-        value=0.05,
-        step=0.01,
-        help="Smaller dt → smoother curves (more points).",
-    )
+    dt = 0.05
 
     # Save current as default for next open
     st.session_state.u1d_defaults.update({"u": u, "a": a, "T": T})
