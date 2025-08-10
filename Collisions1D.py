@@ -196,7 +196,7 @@ def app():
                 st.session_state.imp_t_now = float(next_t)
             st.rerun()
 
-        st.markdown("*Shaded area under $F(t)$ is impulse $J$.  $\\Delta v = J/m$.*")
+        st.markdown("*Shaded area under $F(t)$ is impulse $J$.  $\\Delta v = J/m$*")
 
 if __name__ == "__main__":
     st.set_page_config(page_title="Impulse–Momentum", layout="wide")
