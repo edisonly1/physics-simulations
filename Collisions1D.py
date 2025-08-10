@@ -80,7 +80,7 @@ def draw_track_and_carts(x1, x2, L, w=0.9, h=0.45) -> plt.Figure:
 
 # ---------- Streamlit App ----------
 def app():
-    st.title("Elastic & Inelastic Collisions (1D) — Animated, No Overlap")
+    st.title("Elastic & Inelastic Collisions (1D)")
 
     with st.expander("Show core equations"):
         st.latex(r"m_1 u_1 + m_2 u_2 = m_1 v_1 + m_2 v_2")
@@ -187,9 +187,6 @@ def app():
         # Real-time feel
         time.sleep(base_dt * 0.85)
 
-    # Caption
-    st.caption("Blocks resolve contact at the **exact hit time inside each frame**, "
-               "so they never pass through each other. Perfectly inelastic mode keeps them touching after impact.")
 
 # Standalone
 if __name__ == "__main__":
