@@ -102,72 +102,25 @@ def draw_ball_panel(t, x, v, t_now):
 
 # ---------- Streamlit UI ----------
 def app():
-    st.title("Impulse–Momentum Theorem")
-    st.caption("Link between force over time and momentum change:  "
-               "$J = \\Delta p = F_{avg}\\,\\Delta t = \\int F(t)\\,dt$.")
-
-    colL, colR = st.columns([1, 2])
-
-    with colL:
-        st.subheader("Inputs")
-        m = st.number_input("Mass m (kg)", min_value=0.01, value=0.20, step=0.01, format="%.2f")
-        v0 = st.number_input("Initial velocity v₀ (m/s)", value=0.0, step=0.1, format="%.2f")
-
-        mode = st.radio("Force profile", ["Preset pulse", "Custom (table)"], index=0)
-        dt = st.number_input("Time step dt (s)", min_value=0.0005, value=0.002, step=0.0005, format="%.4f")
-
-        if mode == "Preset pulse":
-            shape = st.selectbox("Pulse shape", ["Rectangular", "Triangular", "Half-sine"])
-            Fmax = st.number_input("Peak force Fmax (N)", value=200.0, step=10.0)
-            duration = st.number_input("Contact duration (s)", min_value=0.002, value=0.040, step=0.002, format="%.3f")
-            pre  = st.number_input("Pre-roll time (s)", min_value=0.0, value=0.050, step=0.010, format="%.3f")
-            post = st.number_input("Post-roll time (s)", min_value=0.0, value=0.150, step=0.010, format="%.3f")
-            t, F = build_preset_force(shape, Fmax, duration, pre, post, dt)
-            editable_df = None
-        else:
-            total_T = st.number_input("Total time window T (s)", min_value=0.02, value=0.300, step=0.010, format="%.3f")
-            st.markdown("Edit the control points below (piecewise **linear**).")
-            default_pts = pd.DataFrame({"t": [0.00, 0.05, 0.07, total_T], "F": [0.0, 250.0, 0.0, 0.0]})
-            editable_df = st.data_editor(default_pts, num_rows="dynamic", hide_index=True, key="ft_points")
-            t, F, editable_df = build_custom_force(editable_df, total_T, dt)
-
-        # compute
-        results = impulse_and_kinematics(t, F, m, v0)
-        J, v, x = results["J_total"], results["v"], results["x"]
-
-        st.subheader("Outputs")
-        st.write(f"**Impulse (total)**  J = `{J:.4f}` N·s")
-        st.write(f"**Momentum change**  Δp = `{J:.4f}` kg·m/s   →   **vₓ final** = `{(m*v0 + J)/m:.4f}` m/s")
-        st.write(f"**Average force over contact**  F_avg = `{results['F_avg']:.2f}` N")
-        if editable_df is not None:
-            with st.expander("Control points used (custom mode)"):
-                st.dataframe(editable_df, hide_index=True, use_container_width=True)
-
-    with colR:
-        st.subheader("Force–time (area is impulse)")
-        st.pyplot(plot_force_with_area(t, F, J), use_container_width=True)
-
-        st.subheader("Velocity–time")
-        st.pyplot(plot_velocity(t, v, v0, J, m), use_container_width=True)
-
-        # -------- Animation controls (Play/Pause) --------
+        # “Animation” — time scrubber + Play/Pause
         st.subheader("Animation: ball struck by force profile")
 
-        # initialize persistent state
         t_min, t_max = float(t[0]), float(t[-1])
         step_time = float(max(dt, (t_max - t_min) / 200.0))
+
+        # persistent state
         if "imp_t_now" not in st.session_state: st.session_state.imp_t_now = t_min
         if "imp_is_playing" not in st.session_state: st.session_state.imp_is_playing = False
         if "imp_speed" not in st.session_state: st.session_state.imp_speed = 1.0
 
-        # clamp if user changed parameters/time window
+        # clamp if time range changed after user edits
         st.session_state.imp_t_now = float(np.clip(st.session_state.imp_t_now, t_min, t_max))
 
         c1, c2, c3 = st.columns([1, 1, 2])
         if not st.session_state.imp_is_playing:
             if c1.button("▶ Play", use_container_width=True):
                 st.session_state.imp_is_playing = True
-                st.rerun()
+                st.experimental_rerun()
         else:
             if c1.button("⏸ Pause", use_container_width=True):
                 st.session_state.imp_is_playing = False
@@ -182,14 +135,15 @@ def app():
             "Speed", options=[0.25, 0.5, 1.0, 1.5, 2.0, 3.0], value=st.session_state.imp_speed
         )
 
-        # scrubber (manual)
-        t_now = st.slider("Scrub time",
-                          min_value=t_min, max_value=t_max,
-                          value=float(st.session_state.imp_t_now),
-                          step=step_time, format="%.3f")
+        # manual scrubber (shares the same state)
+        t_now = st.slider(
+            "Scrub time", min_value=t_min, max_value=t_max,
+            value=float(st.session_state.imp_t_now),
+            step=step_time, format="%.3f", key="imp_scrubber"
+        )
         st.session_state.imp_t_now = float(t_now)
 
-        # draw current frame
+        # draw frame
         st.pyplot(draw_ball_panel(t, x, v, st.session_state.imp_t_now), use_container_width=True)
 
         # auto-advance when playing
@@ -201,7 +155,8 @@ def app():
                 st.session_state.imp_is_playing = False
             else:
                 st.session_state.imp_t_now = float(next_t)
-            st.rerun()
+            st.experimental_rerun()
+
 
         st.markdown(
             "*Notes:* The shaded area under $F(t)$ is the impulse $J$. "
