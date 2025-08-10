@@ -266,9 +266,9 @@ def app():
         while i < len(t) - 1 and t[i] < next_frame_t:
             i += 1
 
-        # edge check using simulation position
-        hit_left  = (x[i] <= s_min)
-        hit_right = (x[i] >= s_max)
+        # Decide which edge counts as "hit" based on motion direction
+        tol = 1e-9
+        hit = (v[i] > 0 and x[i] >= s_max - tol) or (v[i] < 0 and x[i] <= s_min + tol)
 
         # map to screen (keep visible)
         s_pos = np.clip(x[i], s_min, s_max)
@@ -285,13 +285,13 @@ def app():
 
         cx, cy = bx, by
 
-        # stop cleanly at the ledge
-        if hit_left or hit_right:
+        if hit:
+            # zero dynamic arrows for a clean final frame (optional)
             update_arrow(arr_app, cx, cy, ux, uy, 0.0,       scale=0.004)
             update_arrow(arr_fric, cx, cy, ux, uy, 0.0,      scale=0.004)
             update_arrow(arr_N,   cx, cy, nx, ny, N,         scale=0.004)
             update_arrow(arr_W,   cx, cy, 0.0, -1.0, mass*g, scale=0.004)
-            status_text.set_text("Reached edge — animation stopped.")
+            status_text.set_text("Reached edge")
             placeholder.pyplot(figA)
             break
 
