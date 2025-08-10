@@ -9,7 +9,7 @@ import AtwoodMachine
 import SpingMass
 import WorkEnergy
 import Collisions1D
-import ImpulseMomentem
+import ImpulseMomentum
 
 st.set_page_config(page_title="Physics Simulation Lab", layout="wide")
 
@@ -85,4 +85,4 @@ elif page == "Work-Energy Theorem":
 elif page == "Collisions (1D)":
     Collisions1D.app()
 elif page == "Impulse Momentum":
-    ImpulseMomentem.app()
+    ImpulseMomentum.app()
