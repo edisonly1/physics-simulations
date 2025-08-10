@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
+from matplotlib.patches import FancyArrowPatch
 
 # --------------------------- Data model --------------------------- #
 @dataclass
@@ -278,6 +279,11 @@ def app(data: Optional[dict] = None):
             index=2,
             help="Sim time per frame ≈ speed / fps (independent of dt)."
         )
+        show_vec = st.checkbox("Show velocity vector", value=True)
+        # Optional: if you want a size knob too, uncomment next line
+        # vec_scale = st.slider("Vector scale", 0.05, 0.30, 0.12, 0.01, help="Arrow length as a fraction of axis range")
+        vec_scale = 0.12  # fixed scale: ~12% of max axis span
+
 
     # Ensure state var exists
     if "pm_anim_t" not in st.session_state:
@@ -296,21 +302,34 @@ def app(data: Optional[dict] = None):
     xlim = (0.0, max(1.0, x_max + x_pad))
     ylim = (0.0, max(1.0, y_max + y_pad))
 
-    def draw_time(t_now: float):
+    def draw_time(t_now: float, show_vec=True, show_components=False, vec_scale=0.12):
+        """
+        Draw frame at arbitrary simulation time t_now (continuous).
+        show_vec: draw net velocity vector
+        show_components: draw vx and vy components as separate arrows
+        vec_scale: arrow length as a fraction of the larger axis span
+        """
         t_now = float(np.clip(t_now, 0.0, t_end))
-        # Path-so-far with fixed resolution (scaled by progress), not dt
+
+        # Path-so-far (fixed resolution; independent of dt)
         frac = 0.0 if t_end <= 0 else (t_now / t_end)
         n_so_far = max(2, int(round(N_FULL * max(0.0, min(1.0, frac)))))
         _, x_sf, y_sf = sample_path(vx, v0y, h0, g, 0.0, t_now, n_so_far)
 
+        # Current position & instantaneous velocity
         x_now = vx * t_now
         y_now = h0 + v0y * t_now - 0.5 * g * t_now**2
+        vx_now = vx
+        vy_now = v0y - g * t_now
+        speed_mag = max(1e-9, np.hypot(vx_now, vy_now))
 
         fig, ax = plt.subplots(figsize=(8, 4.5))
         ax.plot(x_full, y_full, color="#cccccc", linestyle="--", label="Full path")
         ax.plot(x_sf, y_sf, linewidth=2, label="Path so far")
         ax.scatter([x_now], [y_now], s=80, zorder=3)
         ax.axhline(0.0, color="black", linewidth=1)
+
+        # fixed axes you computed earlier
         ax.set_xlim(*xlim)
         ax.set_ylim(*ylim)
         ax.set_xlabel("x (m)")
@@ -319,6 +338,40 @@ def app(data: Optional[dict] = None):
         ax.legend(loc="upper left")
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
+
+        # ---- Velocity arrows ----
+        if show_vec or show_components:
+            span = max(xlim[1] - xlim[0], ylim[1] - ylim[0])
+            L = vec_scale * span   # base arrow length
+
+            # Net velocity
+            if show_vec:
+                dx = (vx_now / speed_mag) * L
+                dy = (vy_now / speed_mag) * L
+                ax.add_patch(FancyArrowPatch(
+                    (x_now, y_now), (x_now + dx, y_now + dy),
+                    arrowstyle="->", mutation_scale=18, linewidth=2, color="tab:green", zorder=4
+                ))
+                ax.text(x_now + dx, y_now + dy, " v", fontsize=10, color="tab:green", va="bottom", ha="left")
+
+            # Components (optional)
+            if show_components:
+                # vx component (horizontal)
+                sign_x = 1.0 if vx_now >= 0 else -1.0
+                ax.add_patch(FancyArrowPatch(
+                    (x_now, y_now), (x_now + sign_x * L, y_now),
+                    arrowstyle="->", mutation_scale=16, linewidth=1.8, color="tab:blue", zorder=4
+                ))
+                ax.text(x_now + sign_x * L, y_now, " vx", fontsize=9, color="tab:blue", va="bottom", ha="left")
+
+                # vy component (vertical)
+                sign_y = 1.0 if vy_now >= 0 else -1.0
+                ax.add_patch(FancyArrowPatch(
+                    (x_now, y_now), (x_now, y_now + sign_y * L),
+                    arrowstyle="->", mutation_scale=16, linewidth=1.8, color="tab:red", zorder=4
+                ))
+                ax.text(x_now, y_now + sign_y * L, " vy", fontsize=9, color="tab:red", va="bottom", ha="left")
+
         return fig
 
     placeholder = st.empty()
