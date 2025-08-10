@@ -221,8 +221,10 @@ def app():
             csv_bytes = df.to_csv(index=False).encode("utf-8")
             st.download_button("Download CSV (x, F, W_cumulative)", data=csv_bytes, file_name="work_energy_profile.csv", mime="text/csv")
 
-    st.info("Tip: Positive shaded area adds energy; negative shaded area removes energy.  "
-            "For springs, area equals the change in elastic potential energy, \( \Delta U_s = \tfrac12 k(x_1 - x_{eq})^2 - \tfrac12 k(x_0 - x_{eq})^2 \).")
+    st.info("Tip: Positive shaded area adds energy; negative shaded area removes energy. "
+        "For springs, the shaded area equals the change in elastic potential energy:")
+    st.latex(r"\Delta U_s = \tfrac12 k\,(x_1 - x_{\mathrm{eq}})^2 - \tfrac12 k\,(x_0 - x_{\mathrm{eq}})^2")
+
 
 # Allow running directly (handy for local testing)
 if __name__ == "__main__":
