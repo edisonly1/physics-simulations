@@ -15,6 +15,15 @@ def cumtrapz(y: np.ndarray, x: np.ndarray) -> np.ndarray:
     out[1:] = np.cumsum((y[1:] + y[:-1]) * 0.5 * np.diff(x))
     return out
 
+def show_fig(fig):
+    # Render then close so Streamlit doesn't keep a handle to a stale PNG id
+    st.pyplot(fig, use_container_width=True, clear_figure=True)
+    try:
+        plt.close(fig)
+    except Exception:
+        pass
+
+
 def build_preset_force(shape: str, Fmax: float, duration: float, pre: float, post: float, dt: float):
     T = max(1e-3, pre + duration + post)
     N = max(200, int(round(T/dt)))
@@ -189,7 +198,8 @@ def app():
         # ---- Graphs with cursor + partial-impulse shading
         st.subheader("Force–time (impulse so far)")
         figF, J_now = plot_force_until(t, F, st.session_state.imp_t_now)
-        st.pyplot(figF, use_container_width=True)
+        show_fig(fig)
+
 
         st.subheader("Velocity–time")
         st.pyplot(plot_velocity_until(t, v, v0, st.session_state.imp_t_now, J_total, m),
