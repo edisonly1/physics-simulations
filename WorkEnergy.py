@@ -15,18 +15,28 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import pandas as pd
 
+def cumulative_trapz(y, x):
+    """Cumulative trapezoid integral with initial=0.  NumPy-only."""
+    y = np.asarray(y, dtype=float)
+    x = np.asarray(x, dtype=float)
+    if y.shape != x.shape:
+        raise ValueError("x and y must have the same shape")
+    if x.size < 2:
+        return np.zeros_like(x, dtype=float)
+    dx = np.diff(x)
+    area = 0.5 * (y[:-1] + y[1:]) * dx
+    return np.concatenate(([0.0], np.cumsum(area)))
 # ---------- Math helpers ----------
 
-def trapz_integral(func, a: float, b: float, n: int = 1000) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
-    """Return (W, x, F, W_cum): integral of func from a to b via trapezoidal rule."""
+def trapz_integral(func, a: float, b: float, n: int = 1000):
     if n < 2:
         n = 2
     x = np.linspace(a, b, n)
     F = func(x)
-    # cumulative work vs x (same orientation as x)
-    W_cum = np.cumtrapz(F, x, initial=0.0)
+    W_cum = cumulative_trapz(F, x)        # <-- changed
     W = float(np.trapz(F, x))
     return W, x, F, W_cum
+
 
 def final_speed_from_work(m: float, v0: float, W: float) -> tuple[float, bool]:
     """Compute final speed from ΔKE = W. Returns (vf, stopped_early_flag)."""
@@ -203,7 +213,7 @@ def app():
             f_for_csv = F_spring if model.startswith("Spring") else f_custom
             x_dense = np.linspace(min(x0, x1), max(x0, x1), 1200)
             F_dense = f_for_csv(x_dense)
-            Wcum_dense = np.cumtrapz(F_dense, x_dense, initial=0.0)
+            Wcum_dense = cumulative_trapz(F_dense, x_dense)   # <-- changed
             fig_wc = plot_cumulative_work(x_dense, Wcum_dense, x0, x1, "Cumulative work across the motion")
             st.pyplot(fig_wc, use_container_width=True)
 
