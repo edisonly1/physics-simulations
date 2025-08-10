@@ -283,6 +283,9 @@ def app(data: Optional[dict] = None):
         # Optional: if you want a size knob too, uncomment next line
         # vec_scale = st.slider("Vector scale", 0.05, 0.30, 0.12, 0.01, help="Arrow length as a fraction of axis range")
         vec_scale = 0.12  # fixed scale: ~12% of max axis span
+        show_components = st.checkbox("Show vx/vy components", value=False)
+        # then call:
+        fig0 = draw_time(st.session_state.pm_anim_t, show_vec=show_vec, show_components=show_components)
 
 
     # Ensure state var exists
