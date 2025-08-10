@@ -167,7 +167,7 @@ def app():
         if not st.session_state.imp_is_playing:
             if c1.button("▶ Play", use_container_width=True):
                 st.session_state.imp_is_playing = True
-                st.experimental_rerun()
+                st.rerun()
         else:
             if c1.button("⏸ Pause", use_container_width=True):
                 st.session_state.imp_is_playing = False
