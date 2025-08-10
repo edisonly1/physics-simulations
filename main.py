@@ -3,6 +3,7 @@ import ProjectileMotion
 import InclinedPlane
 import FreeFall
 import UniformLinearAccelerated1D as U1D 
+import NewtonsSecondLaw
 
 st.set_page_config(page_title="Physics Simulation Lab", layout="wide")
 
@@ -16,6 +17,7 @@ page = st.sidebar.selectbox(
         "Projectile Motion",
         "Inclined Plane",
         "Free Fall",
+        "Newton's Second Law"
     ],
 )
 
@@ -52,3 +54,7 @@ elif page == "Inclined Plane":
 elif page == "Free Fall":
     st.title("Free Fall Simulator")
     FreeFall.app()          # interactive mode (no data)
+
+elif page == "Newton's Second Law":
+    st.title("Newton's Second Law Simulation")
+    NewtonsSecondLaw.py.app()
