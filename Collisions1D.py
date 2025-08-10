@@ -1,4 +1,4 @@
-# Collisions1D.py — animated 1D collisions with coefficient of restitution e
+# Collisions1D.py — animated 1D collisions with restitution e + Energy bar charts
 from __future__ import annotations
 import time
 import numpy as np
@@ -8,54 +8,33 @@ import streamlit as st
 # ---------------- Physics helpers ----------------
 def final_velocities(m1: float, m2: float, u1: float, u2: float,
                      mode: str, e: float | None = None) -> tuple[float, float, float]:
-    """
-    Return (v1, v2, e_used) for Elastic, Perfectly Inelastic, or Partially Inelastic (with slider e).
-    Uses general restitution formula: v2 - v1 = -e (u2 - u1) with momentum conservation.
-    """
     if mode == "Elastic":
         e_used = 1.0
     elif mode == "Perfectly Inelastic":
         e_used = 0.0
-    else:  # Partially Inelastic
+    else:
         e_used = float(np.clip(0.0 if e is None else e, 0.0, 1.0))
-
     v1 = (m1*u1 + m2*u2 - m2*e_used*(u1 - u2)) / (m1 + m2)
     v2 = (m1*u1 + m2*u2 + m1*e_used*(u1 - u2)) / (m1 + m2)
     return float(v1), float(v2), e_used
 
 def step_no_overlap(x1, x2, v1, v2, m1, m2, mode, e, w, dt):
-    """
-    Advance by dt with exact contact handling so carts never overlap.
-    Carts centered at x1, x2 with identical width w.
-    Returns (x1, x2, v1, v2, collided_this_step).
-    """
     vrel = v1 - v2
-    gap = (x2 - w/2) - (x1 + w/2)  # distance between facing edges
-
-    # Predict contact inside this step
+    gap = (x2 - w/2) - (x1 + w/2)
     if vrel > 0 and gap >= 0:
         t_hit = gap / vrel
         if 0 <= t_hit <= dt:
-            # Move to first contact
             x1 += v1 * t_hit
             x2 += v2 * t_hit
-
-            # Apply collision response using restitution
             v1p, v2p, e_used = final_velocities(m1, m2, v1, v2, mode, e)
-
-            # Finish remainder of step with new velocities
             rem = dt - t_hit
             x1 += v1p * rem
             x2 += v2p * rem
-
-            if e_used == 0.0:  # stick: keep them just touching
+            if e_used == 0.0:  # stick: keep touching
                 mid = (x1 + x2) / 2.0
                 x1 = mid - w/2
                 x2 = mid + w/2
-
             return x1, x2, v1p, v2p, True
-
-    # No contact during this step → uniform motion
     x1 += v1 * dt
     x2 += v2 * dt
     return x1, x2, v1, v2, False
@@ -63,19 +42,50 @@ def step_no_overlap(x1, x2, v1, v2, m1, m2, mode, e, w, dt):
 # ---------------- Drawing ----------------
 def draw_track_and_carts(x1, x2, L, w=1.0, h=0.45) -> plt.Figure:
     fig, ax = plt.subplots(figsize=(8, 2.6))
-    ax.plot([0, L], [0, 0], linewidth=6, alpha=0.25)  # track
-
+    ax.plot([0, L], [0, 0], linewidth=6, alpha=0.25)
     for x, color in zip([x1, x2], ["tab:blue", "tab:orange"]):
         left = x - w/2
         rect = plt.Rectangle((left, 0.05), w, h, ec="black", fc=color, alpha=0.95)
         ax.add_patch(rect)
         ax.plot([x], [0.05 + h + 0.02], marker="v", ms=6)
-
     ax.set_xlim(-0.5, L + 0.5)
     ax.set_ylim(-0.1, 1.1)
     ax.set_xlabel("Position (m)")
     ax.get_yaxis().set_visible(False)
     ax.set_title("1D Collision Animation (Play to watch)")
+    fig.tight_layout()
+    return fig
+
+def energy_bars(ke1_i, ke2_i, ke1_f, ke2_f) -> plt.Figure:
+    """Side-by-side bar charts: KE per cart BEFORE vs AFTER."""
+    fig, axs = plt.subplots(1, 2, figsize=(8, 3.8))
+    labels = ["Cart 1", "Cart 2"]
+
+    axs[0].bar(labels, [ke1_i, ke2_i])
+    axs[0].set_title("Energy BEFORE")
+    axs[0].set_ylabel("Kinetic Energy (J)")
+    axs[1].bar(labels, [ke1_f, ke2_f])
+    axs[1].set_title("Energy AFTER")
+
+    # annotate bars with values
+    for ax in axs:
+        for p in ax.patches:
+            h = p.get_height()
+            ax.annotate(f"{h:.2f}", (p.get_x() + p.get_width()/2, h),
+                        ha="center", va="bottom", fontsize=9)
+    fig.tight_layout()
+    return fig
+
+def energy_pies(ke1_i, ke2_i, ke1_f, ke2_f) -> plt.Figure:
+    """Optional: pies if you want them."""
+    fig, axs = plt.subplots(1, 2, figsize=(8, 3.8))
+    eps = 1e-9
+    axs[0].pie([max(ke1_i, eps), max(ke2_i, eps)],
+               labels=[f"Cart 1\n{ke1_i:.2f} J", f"Cart 2\n{ke2_i:.2f} J"], autopct=lambda p: f"{p:.0f}%")
+    axs[0].set_title("Energy BEFORE")
+    axs[1].pie([max(ke1_f, eps), max(ke2_f, eps)],
+               labels=[f"Cart 1\n{ke1_f:.2f} J", f"Cart 2\n{ke2_f:.2f} J"], autopct=lambda p: f"{p:.0f}%")
+    axs[1].set_title("Energy AFTER")
     fig.tight_layout()
     return fig
 
@@ -98,7 +108,6 @@ def app():
         mode = st.radio(
             "Collision type",
             ["Elastic", "Perfectly Inelastic", "Partially Inelastic (choose e)"],
-            horizontal=False,
         )
         e_slider = None
         if mode.startswith("Partially"):
@@ -113,7 +122,7 @@ def app():
         duration = st.slider("Run time (s)", 1.0, 15.0, 6.0, 0.1)
         speed = st.slider("Playback speed", 0.25, 2.0, 1.0, 0.05)
 
-    # Predicted finals (using chosen e)
+    # Predicted finals (for the charts)
     v1f, v2f, e_used = final_velocities(m1, m2, u1, u2,
                                         "Partially Inelastic" if mode.startswith("Partially") else mode,
                                         e_slider)
@@ -123,9 +132,7 @@ def app():
         KEi = 0.5 * m1 * u1**2 + 0.5 * m2 * u2**2
         KEf = 0.5 * m1 * v1f**2 + 0.5 * m2 * v2f**2
         pi, pf = m1*u1 + m2*u2, m1*v1f + m2*v2f
-
-        st.write(f"**e used**: `{e_used:.2f}`  "
-                 f"(Elastic → 1.00, Perfectly Inelastic → 0.00)")
+        st.write(f"**e used**: `{e_used:.2f}`")
         st.write(f"**Final velocities** → v₁ = `{v1f:.3f}` m/s,  v₂ = `{v2f:.3f}` m/s")
         st.write(f"**Momentum**: pᵢ = `{pi:.3f}`, p_f = `{pf:.3f}` (Δp = `{pf-pi:+.2e}`)")
         dKE = KEf - KEi
@@ -148,11 +155,10 @@ def app():
     x2 = st.session_state.x2
     v1 = st.session_state.v1
     v2 = st.session_state.v2
-    t  = st.session_state.t
 
     # Controls
     play_col, reset_col, _ = st.columns([0.25, 0.25, 0.5])
-    if play_col.button("Play" if not st.session_state.playing else "Pause"):
+    if play_col.button("▶Play" if not st.session_state.playing else "Pause"):
         st.session_state.playing = not st.session_state.playing
     if reset_col.button("Reset"):
         st.session_state.t = 0.0
@@ -162,10 +168,10 @@ def app():
         st.session_state.v2 = u2
         st.session_state.playing = False
         x1 = st.session_state.x1; x2 = st.session_state.x2
-        v1 = st.session_state.v1; v2 = st.session_state.v2; t = st.session_state.t
+        v1 = st.session_state.v1; v2 = st.session_state.v2
 
     frame = st.empty()
-    fig = draw_track_and_carts(x1, x2, L, w=CART_W)  # initial draw
+    fig = draw_track_and_carts(x1, x2, L, w=CART_W)
     frame.pyplot(fig, use_container_width=True)
 
     # Run loop
@@ -178,22 +184,30 @@ def app():
             "Partially Inelastic" if mode.startswith("Partially") else mode,
             e_slider, CART_W, dt
         )
-        # keep on track
         x1 = float(np.clip(x1, 0.8, L - 0.8))
         x2 = float(np.clip(x2, 0.8, L - 0.8))
-
         st.session_state.x1, st.session_state.x2 = x1, x2
         st.session_state.v1, st.session_state.v2 = v1, v2
         st.session_state.t += dt
-
         fig = draw_track_and_carts(x1, x2, L, w=CART_W)
         frame.pyplot(fig, use_container_width=True)
         time.sleep(base_dt * 0.85)
 
-    st.caption(
-               "Choose **Partially Inelastic** to explore any 0 ≤ e ≤ 1.")
-    
-# Standalone run
+    # ---------- Energy charts (Before vs After) ----------
+    ke1_i, ke2_i = 0.5 * m1 * u1**2, 0.5 * m2 * u2**2
+    ke1_f, ke2_f = 0.5 * m1 * v1f**2, 0.5 * m2 * v2f**2
+
+    st.subheader("Energy comparison")
+    chart_type = st.radio("Chart type", ["Bars", "Pies"], horizontal=True, index=0)
+    if chart_type == "Bars":
+        st.pyplot(energy_bars(ke1_i, ke2_i, ke1_f, ke2_f), use_container_width=True)
+    else:
+        st.pyplot(energy_pies(ke1_i, ke2_i, ke1_f, ke2_f), use_container_width=True)
+
+    st.caption("Bars show kinetic energy carried by each cart **before** and **after** the collision. "
+               "Momentum is always conserved; kinetic energy only for elastic (e=1).")
+
+# Standalone
 if __name__ == "__main__":
-    st.set_page_config(page_title="1D Collisions (e-slider)", layout="wide")
+    st.set_page_config(page_title="1D Collisions", layout="wide")
     app()
