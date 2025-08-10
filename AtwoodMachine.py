@@ -171,56 +171,85 @@ def _animate_full(
         time.sleep(dt)
         t += dt
 
-def _animate_half(a, x0=0.15, y0=0.5, edge_x=0.85, floor_y=0.05,
-                  fps=30, sim_time=6.0, cart_w=0.12, cart_h=0.06):
+def _animate_half(
+    a,
+    fps=30,
+    sim_time=6.0,
+    # layout tuned to match the BYJU-style sketch
+    table_y=0.72,          # <-- higher table
+    edge_x=0.82,           # table ends at the pulley
+    floor_y=0.12,
+    pulley_R=0.045,
+    cart_w=0.12,
+    cart_h=0.07,
+    x0=0.20,               # cart start
+    yhang0=0.55            # hanging block start (center y)
+):
     """
-    Schematic: cart on table (bottom), hanging mass on right side over pulley.
-    We map rope displacement equally: x increases to right; y decreases (hangs down).
-    Stops if cart reaches edge or mass hits floor.
+    BYJU-style Half Atwood:
+    - Thick table line high on the canvas
+    - Pulley drawn at the table's right edge
+    - Rope is perfectly horizontal along the table, then perfectly vertical down
+    Stops if the cart reaches the edge or the hanging block touches the floor.
     """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import time
+
     dt = 1.0 / fps
     t = 0.0
 
+    pulley_x = edge_x
+    pulley_y = table_y + pulley_R + 0.005  # pulley just above the table
+
+    # safety limits
+    min_y_hang = floor_y + cart_h/2
+    max_x_cart = edge_x - cart_w/2 - 1e-4
+    min_x_cart = 0.06 + cart_w/2
+
     ph = st.empty()
+
     while t <= sim_time:
-        s = 0.5 * a * t**2  # displacement pulled by hanging mass
+        s = 0.5 * a * t**2
 
         # positions
-        x_cart = np.clip(x0 + s, 0.05 + cart_w/2, edge_x - cart_w/2)
-        y_hang = np.clip(y0 - s, floor_y + cart_h/2, 0.95 - cart_h/2)
+        x_cart = np.clip(x0 + s, min_x_cart, max_x_cart)
+        y_hang = np.clip(yhang0 - s, min_y_hang, 0.94 - cart_h/2)
 
-        hit_edge = (x_cart >= edge_x - cart_w/2 - 1e-4) or (y_hang <= floor_y + cart_h/2 + 1e-4)
+        hit_edge = (abs(x_cart - max_x_cart) < 1e-4) or (abs(y_hang - min_y_hang) < 1e-4)
 
-        fig, ax = plt.subplots(figsize=(6,4))
-        ax.set_xlim(0,1)
-        ax.set_ylim(0,1)
+        fig, ax = plt.subplots(figsize=(7, 4))
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
         ax.axis("off")
 
-        # Table
-        ax.plot([0.05, edge_x], [0.25, 0.25], 'k-', lw=3)
-        # Pulley at corner
-        pulley_x, pulley_y = edge_x, 0.25
-        circ = plt.Circle((pulley_x, pulley_y), 0.04, fill=False, lw=2)
-        ax.add_patch(circ)
+        # Table (thick line)
+        ax.plot([0.06, edge_x], [table_y, table_y], 'k-', lw=6)
 
-        # Rope: cart to pulley to hanging mass
-        ax.plot([x_cart, pulley_x], [0.25+cart_h/2, pulley_y], lw=2)          # along table
-        ax.plot([pulley_x, pulley_x], [pulley_y, y_hang + cart_h/2], lw=2)    # down
+        # Pulley at the table edge
+        outer = plt.Circle((pulley_x, pulley_y), pulley_R, ec='k', fc='#d0d0d0', lw=2)
+        inner = plt.Circle((pulley_x, pulley_y), pulley_R*0.55, ec='k', fc='#bfbfbf', lw=1)
+        ax.add_patch(outer); ax.add_patch(inner)
 
-        # Cart
-        cart = plt.Rectangle((x_cart - cart_w/2, 0.25), cart_w, cart_h, ec='k', fc='lightgray')
+        # Rope: perfectly horizontal along table top, then vertical drop
+        y_rope = table_y + cart_h/2
+        ax.plot([x_cart, pulley_x], [y_rope, y_rope], lw=4, color='#1f77b4')           # horizontal
+        ax.plot([pulley_x, pulley_x], [y_rope, y_hang + cart_h/2], lw=4, color='#ff7f0e')  # vertical
+
+        # Cart on table
+        cart = plt.Rectangle((x_cart - cart_w/2, table_y), cart_w, cart_h, ec='k', fc='lightgray', lw=2)
         ax.add_patch(cart)
-        ax.text(x_cart, 0.25 + cart_h + 0.03, "m₁ (table)", ha='center', fontsize=11)
+        ax.text(x_cart, table_y + cart_h + 0.03, "m₁ (table)", ha='center', fontsize=12)
 
-        # Hanging block
-        block = plt.Rectangle((pulley_x - cart_w/2, y_hang - cart_h/2), cart_w, cart_h, ec='k', fc='lightgray')
+        # Hanging block + floor
+        block = plt.Rectangle((pulley_x - cart_w/2, y_hang - cart_h/2), cart_w, cart_h, ec='k', fc='lightgray', lw=2)
         ax.add_patch(block)
-        ax.text(pulley_x + 0.08, y_hang, "m₂ (hanging)", va='center', fontsize=11)
+        ax.text(pulley_x + 0.08, y_hang, "m₂ (hanging)", va='center', fontsize=12)
+        ax.plot([pulley_x - 0.14, pulley_x + 0.14], [floor_y, floor_y], 'k-', lw=3)
 
-        # Floor
-        ax.plot([pulley_x - 0.1, pulley_x + 0.1],[floor_y, floor_y],'k-', lw=2)
+        # time label
+        ax.text(0.04, 0.94, f"t = {t:0.2f} s", fontsize=13)
 
-        ax.text(0.02, 0.96, f"t = {t:0.2f} s", fontsize=10)
         ph.pyplot(fig, clear_figure=True)
         plt.close(fig)
 
@@ -229,6 +258,7 @@ def _animate_half(a, x0=0.15, y0=0.5, edge_x=0.85, floor_y=0.05,
 
         time.sleep(dt)
         t += dt
+
 
 def app():
     st.title("Atwood Machine — Full & Half")
