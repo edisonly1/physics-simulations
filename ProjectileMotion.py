@@ -82,7 +82,6 @@ def sample_path(vx: float, v0y: float, h0: float, g: float, t0: float, t1: float
 
 # --------------------------- UI --------------------------- #
 def app(data: Optional[dict] = None):
-    st.title("Projectile Motion (2D)")
     _ensure_session_state()
 
     with st.expander("What this shows", expanded=False):
