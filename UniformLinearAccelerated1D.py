@@ -53,7 +53,6 @@ def _ensure_session_state():
 
 # --------------------------- UI --------------------------- #
 def app():
-    st.title("Uniform Linear & Accelerated Motion (1D)")
     _ensure_session_state()
 
     with st.expander("What this shows", expanded=False):
