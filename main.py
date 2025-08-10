@@ -4,6 +4,7 @@ import InclinedPlane
 import FreeFall
 import UniformLinearAccelerated1D as U1D 
 import NewtonsSecondLaw
+import FrictionModels
 
 st.set_page_config(page_title="Physics Simulation Lab", layout="wide")
 
@@ -58,3 +59,6 @@ elif page == "Free Fall":
 elif page == "Newton's Second Law":
     st.title("Newton's Second Law Simulation")
     NewtonsSecondLaw.app()
+
+elif page == "Friction Models":
+    FrictionModels.app()
