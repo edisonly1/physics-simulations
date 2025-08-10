@@ -255,7 +255,7 @@ def run_animation_2d(x, y, fps=60, speed=1.0):
 # Streamlit App
 # -----------------------------
 def app():
-    st.title("Newton’s 2nd Law (1D/2D)")
+ 
     st.caption("Links forces to acceleration; bridges kinematics → dynamics.")
 
     # --------- Sidebar controls ---------
