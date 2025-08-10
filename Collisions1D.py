@@ -102,60 +102,60 @@ def draw_ball_panel(t, x, v, t_now):
 
 # ---------- Streamlit UI ----------
 def app():
-        # “Animation” — time scrubber + Play/Pause
-        st.subheader("Animation: ball struck by force profile")
+    # “Animation” — time scrubber + Play/Pause
+    st.subheader("Animation: ball struck by force profile")
 
-        t_min, t_max = float(t[0]), float(t[-1])
-        step_time = float(max(dt, (t_max - t_min) / 200.0))
+    t_min, t_max = float(t[0]), float(t[-1])
+    step_time = float(max(dt, (t_max - t_min) / 200.0))
 
-        # persistent state
-        if "imp_t_now" not in st.session_state: st.session_state.imp_t_now = t_min
-        if "imp_is_playing" not in st.session_state: st.session_state.imp_is_playing = False
-        if "imp_speed" not in st.session_state: st.session_state.imp_speed = 1.0
+    # persistent state
+    if "imp_t_now" not in st.session_state: st.session_state.imp_t_now = t_min
+    if "imp_is_playing" not in st.session_state: st.session_state.imp_is_playing = False
+    if "imp_speed" not in st.session_state: st.session_state.imp_speed = 1.0
 
-        # clamp if time range changed after user edits
-        st.session_state.imp_t_now = float(np.clip(st.session_state.imp_t_now, t_min, t_max))
+    # clamp if time range changed after user edits
+    st.session_state.imp_t_now = float(np.clip(st.session_state.imp_t_now, t_min, t_max))
 
-        c1, c2, c3 = st.columns([1, 1, 2])
-        if not st.session_state.imp_is_playing:
-            if c1.button("▶ Play", use_container_width=True):
-                st.session_state.imp_is_playing = True
-                st.experimental_rerun()
-        else:
-            if c1.button("⏸ Pause", use_container_width=True):
-                st.session_state.imp_is_playing = False
-                st.experimental_rerun()
-
-        if c2.button("⟲ Reset", use_container_width=True):
-            st.session_state.imp_t_now = t_min
+    c1, c2, c3 = st.columns([1, 1, 2])
+    if not st.session_state.imp_is_playing:
+        if c1.button("▶ Play", use_container_width=True):
+            st.session_state.imp_is_playing = True
+            st.rerun()
+    else:
+        if c1.button("⏸ Pause", use_container_width=True):
             st.session_state.imp_is_playing = False
-            st.experimental_rerun()
+            st.rerun()
 
-        st.session_state.imp_speed = c3.select_slider(
-            "Speed", options=[0.25, 0.5, 1.0, 1.5, 2.0, 3.0], value=st.session_state.imp_speed
-        )
+    if c2.button("⟲ Reset", use_container_width=True):
+        st.session_state.imp_t_now = t_min
+        st.session_state.imp_is_playing = False
+        st.rerun()
 
-        # manual scrubber (shares the same state)
-        t_now = st.slider(
-            "Scrub time", min_value=t_min, max_value=t_max,
-            value=float(st.session_state.imp_t_now),
-            step=step_time, format="%.3f", key="imp_scrubber"
-        )
-        st.session_state.imp_t_now = float(t_now)
+    st.session_state.imp_speed = c3.select_slider(
+        "Speed", options=[0.25, 0.5, 1.0, 1.5, 2.0, 3.0], value=st.session_state.imp_speed
+    )
 
-        # draw frame
-        st.pyplot(draw_ball_panel(t, x, v, st.session_state.imp_t_now), use_container_width=True)
+    # manual scrubber (shares the same state)
+    t_now = st.slider(
+        "Scrub time", min_value=t_min, max_value=t_max,
+        value=float(st.session_state.imp_t_now),
+        step=step_time, format="%.3f", key="imp_scrubber"
+    )
+    st.session_state.imp_t_now = float(t_now)
 
-        # auto-advance when playing
-        if st.session_state.imp_is_playing:
-            time.sleep(0.016)  # ~60 FPS
-            next_t = st.session_state.imp_t_now + st.session_state.imp_speed * step_time
-            if next_t >= t_max:
-                st.session_state.imp_t_now = t_max
-                st.session_state.imp_is_playing = False
-            else:
-                st.session_state.imp_t_now = float(next_t)
-            st.experimental_rerun()
+    # draw frame
+    st.pyplot(draw_ball_panel(t, x, v, st.session_state.imp_t_now), use_container_width=True)
+
+    # auto-advance when playing
+    if st.session_state.imp_is_playing:
+        time.sleep(0.016)  # ~60 FPS
+        next_t = st.session_state.imp_t_now + st.session_state.imp_speed * step_time
+        if next_t >= t_max:
+            st.session_state.imp_t_now = t_max
+            st.session_state.imp_is_playing = False
+        else:
+            st.session_state.imp_t_now = float(next_t)
+        st.rerun()
 
 
         st.markdown(
