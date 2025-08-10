@@ -9,6 +9,7 @@ import AtwoodMachine
 import SpingMass
 import WorkEnergy
 import Collisions1D
+import ImpulseMomentem
 
 st.set_page_config(page_title="Physics Simulation Lab", layout="wide")
 
@@ -28,6 +29,7 @@ page = st.sidebar.selectbox(
         "Spring-Mass System",
         "Work-Energy Theorem",
         "Collisions (1D)",
+        "Impulse Momentum"
     ],
 )
 
@@ -82,3 +84,5 @@ elif page == "Work-Energy Theorem":
     WorkEnergy.app()
 elif page == "Collisions (1D)":
     Collisions1D.app()
+elif page == "Impulse Momentum":
+    ImpulseMomentem.app()
