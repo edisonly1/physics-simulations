@@ -201,7 +201,7 @@ def app():
                 st.session_state.imp_is_playing = False
             else:
                 st.session_state.imp_t_now = float(next_t)
-            st.experimental_rerun()
+            st.rerun()
 
         st.markdown(
             "*Notes:* The shaded area under $F(t)$ is the impulse $J$. "
