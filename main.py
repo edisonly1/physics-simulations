@@ -6,6 +6,7 @@ import UniformLinearAccelerated1D as U1D
 import NewtonsSecondLaw
 import FrictionModels
 import AtwoodMachine
+import SpingMass
 
 st.set_page_config(page_title="Physics Simulation Lab", layout="wide")
 
@@ -22,6 +23,7 @@ page = st.sidebar.selectbox(
         "Newton's Second Law",
         "Friction Models",
         "Atwood Machine",
+        "Spring-Mass System",
     ],
 )
 
@@ -68,3 +70,6 @@ elif page == "Friction Models":
 
 elif page == "Atwood Machine":
     AtwoodMachine.app()
+
+elif page == "Spring-Mass System":
+    SpingMass.app()
