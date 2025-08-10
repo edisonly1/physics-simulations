@@ -260,20 +260,22 @@ def app():
     frame_dt = 1.0 / fps
     next_frame_t = 0.0
     i = 0
-    # --- choose which sim index to render this frame ---
-    while i < len(t)-1 and t[i] < next_frame_t:
-        i += 1
 
-        # Check for edge hit using the *simulation* position, not the clipped one
+    while i < len(t):
+        # advance sim index to the time we want to render
+        while i < len(t) - 1 and t[i] < next_frame_t:
+            i += 1
+
+        # edge check using simulation position
         hit_left  = (x[i] <= s_min)
         hit_right = (x[i] >= s_max)
 
-        # Map position to screen (clipped so the block stays visible)
+        # map to screen (keep visible)
         s_pos = np.clip(x[i], s_min, s_max)
         bx, by = pos_to_xy(s_pos)
         block.set_xy((bx - block_w/2, by - block_h/2))
 
-        # Unit vectors along axis and normal (same as before)
+        # axis/normal directions
         if use_incline:
             ux, uy = np.cos(theta)*dir_sign, np.sin(theta)*dir_sign
             nx, ny = -np.sin(theta), np.cos(theta)
@@ -283,30 +285,31 @@ def app():
 
         cx, cy = bx, by
 
-        # If we’ve reached the ledge, draw one last frame and stop
+        # stop cleanly at the ledge
         if hit_left or hit_right:
-            # Zero the dynamic arrows for a clean final frame (optional)
             update_arrow(arr_app, cx, cy, ux, uy, 0.0,       scale=0.004)
             update_arrow(arr_fric, cx, cy, ux, uy, 0.0,      scale=0.004)
             update_arrow(arr_N,   cx, cy, nx, ny, N,         scale=0.004)
             update_arrow(arr_W,   cx, cy, 0.0, -1.0, mass*g, scale=0.004)
-
             status_text.set_text("Reached edge — animation stopped.")
             placeholder.pyplot(figA)
             break
 
-        # Otherwise update arrows normally and continue
+        # normal frame
         update_arrow(arr_app, cx, cy, ux, uy, F_app[i], scale=0.004)
         update_arrow(arr_fric, cx, cy, ux, uy, F_fric[i], scale=0.004)
         update_arrow(arr_N,   cx, cy, nx, ny, N,         scale=0.004)
         update_arrow(arr_W,   cx, cy, 0.0, -1.0, mass*g, scale=0.004)
 
-        status_text.set_text(f"Regime: {'Static' if regime[i]==0 else 'Kinetic'}   "
-                            f"F_app={F_app[i]:.0f} N,  F_fr={F_fric[i]:.0f} N")
+        status_text.set_text(
+            f"Regime: {'Static' if regime[i]==0 else 'Kinetic'}   "
+            f"F_app={F_app[i]:.0f} N,  F_fr={F_fric[i]:.0f} N"
+        )
 
         placeholder.pyplot(figA)
         next_frame_t += frame_dt
         time.sleep(max(0.0, frame_dt * 0.85))
+
 
 
     plt.close(figA)
