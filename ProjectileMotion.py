@@ -74,6 +74,11 @@ def max_height(v0: float, angle_deg: float, h0: float, g: float) -> float:
     t_up = v0y / g if g > 0 else 0.0
     return h0 + v0y * t_up - 0.5 * g * t_up**2
 
+def sample_path(vx: float, v0y: float, h0: float, g: float, t0: float, t1: float, n: int):
+    t_s = np.linspace(t0, max(t1, t0), max(2, n))
+    x_s = vx * t_s
+    y_s = h0 + v0y * t_s - 0.5 * g * t_s**2
+    return t_s, x_s, y_s
 
 # --------------------------- UI --------------------------- #
 def app(data: Optional[dict] = None):
@@ -252,7 +257,8 @@ def app(data: Optional[dict] = None):
     ax3.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.)
     st.pyplot(fig3, use_container_width=True)
 
-    # --- Animation ---
+ 
+# --- Animation (continuous time; independent of dt) ---
     st.subheader("Animation: 2D Flight")
     an_c1, an_c2, an_c3, an_c4 = st.columns([1, 1, 1, 2])
     with an_c1:
@@ -263,62 +269,74 @@ def app(data: Optional[dict] = None):
             st.session_state.pm_anim_running = False
     with an_c3:
         if st.button("⟲ Reset", use_container_width=True):
-            st.session_state.pm_anim_idx = 0
+            st.session_state.pm_anim_idx = 0         # legacy, harmless
+            st.session_state.pm_anim_t = 0.0         # continuous sim time
             st.session_state.pm_anim_running = False
     with an_c4:
         fps = st.slider("Playback FPS", 5, 60, 30)
         speed = st.selectbox(
-        "Speed",
-        [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0],
-        index=2,
-        help="1.0× ≈ real-time if dt ≈ 1/fps"
-)
+            "Speed",
+            [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0],
+            index=2,
+            help="Sim time per frame ≈ speed / fps (independent of dt)."
+        )
 
-    # Determine nice bounds
-    x_max = float(np.max(x))
-    y_max = float(max(np.max(y), 0.0))
+    # Ensure state var exists
+    if "pm_anim_t" not in st.session_state:
+        st.session_state.pm_anim_t = 0.0
+
+    # Precompute fixed-resolution full path (independent of dt)
+    N_FULL = 500
+    t_full, x_full, y_full = sample_path(vx, v0y, h0, g, 0.0, t_end, N_FULL)
+    x_full[-1], y_full[-1] = vx * t_end, 0.0  # snap touchdown
+
+    # Fixed axes so the view doesn't jump
+    x_max = float(np.max(x_full))
+    y_max = float(max(np.max(y_full), 0.0))
     x_pad = 0.05 * (x_max if x_max > 0 else 1.0)
     y_pad = 0.10 * (y_max if y_max > 0 else 1.0)
     xlim = (0.0, max(1.0, x_max + x_pad))
     ylim = (0.0, max(1.0, y_max + y_pad))
 
-    # Animation timeline trimmed at touchdown and snapped
-    t_anim = time_grid(t_end, dt)
-    x_anim, y_anim, vx_anim, _ = kinematics(v0, angle, h0, g, t_anim)
-    x_anim[-1] = vx_anim * t_end
-    y_anim[-1] = 0.0
+    def draw_time(t_now: float):
+        t_now = float(np.clip(t_now, 0.0, t_end))
+        # Path-so-far with fixed resolution (scaled by progress), not dt
+        frac = 0.0 if t_end <= 0 else (t_now / t_end)
+        n_so_far = max(2, int(round(N_FULL * max(0.0, min(1.0, frac)))))
+        _, x_sf, y_sf = sample_path(vx, v0y, h0, g, 0.0, t_now, n_so_far)
 
-    def draw_frame(idx: int):
-        idx = max(0, min(idx, len(t_anim) - 1))
+        x_now = vx * t_now
+        y_now = h0 + v0y * t_now - 0.5 * g * t_now**2
+
         fig, ax = plt.subplots(figsize=(8, 4.5))
-        ax.plot(x, y, color="#cccccc", linestyle="--", label="Full path")
-        ax.plot(x_anim[: idx + 1], y_anim[: idx + 1], linewidth=2, label="Path so far")
-        ax.scatter([x_anim[idx]], [y_anim[idx]], s=80, zorder=3)
+        ax.plot(x_full, y_full, color="#cccccc", linestyle="--", label="Full path")
+        ax.plot(x_sf, y_sf, linewidth=2, label="Path so far")
+        ax.scatter([x_now], [y_now], s=80, zorder=3)
         ax.axhline(0.0, color="black", linewidth=1)
         ax.set_xlim(*xlim)
         ax.set_ylim(*ylim)
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
-        ax.set_title(f"t = {t_anim[idx]:.2f} s")
+        ax.set_title(f"t = {t_now:.3f} s")
         ax.legend(loc="upper left")
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
         return fig
 
     placeholder = st.empty()
-    # Always render current frame
-    placeholder.pyplot(draw_frame(st.session_state.pm_anim_idx), use_container_width=True)
+    fig0 = draw_time(st.session_state.pm_anim_t)
+    placeholder.pyplot(fig0, use_container_width=True)
+    plt.close(fig0)
 
-    # Play loop
+    # Advance time by speed/fps per frame (no dt dependence)
     if st.session_state.pm_anim_running:
-        start = st.session_state.pm_anim_idx
-        step = max(1, int(round(speed * (1.0 / max(dt, 1e-6)) / fps)))
-        for i in range(start, len(t_anim), step):
-            placeholder.pyplot(draw_frame(i), use_container_width=True)
-            st.session_state.pm_anim_idx = i
+        dt_frame = float(speed) / float(fps)
+        while st.session_state.pm_anim_running and st.session_state.pm_anim_t < t_end - 1e-9:
+            st.session_state.pm_anim_t = min(t_end, st.session_state.pm_anim_t + dt_frame)
+            figi = draw_time(st.session_state.pm_anim_t)
+            placeholder.pyplot(figi, use_container_width=True)
+            plt.close(figi)
             time.sleep(1.0 / fps)
-            if not st.session_state.pm_anim_running:
-                break
         else:
             st.session_state.pm_anim_running = False
 
