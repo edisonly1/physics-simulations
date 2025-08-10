@@ -156,9 +156,8 @@ def app(data: Optional[dict] = None):
     T = st.slider(
         "Duration, T (s)", 0.1, 60.0, float(st.session_state.get("T", d["T"])) , step=0.1, key="T"
     )
-    dt = st.slider(
-        "Time step for plots (s)", 0.01, 0.5, 0.05, step=0.01, help="Smaller dt → smoother curves (more points)."
-    )
+    dt = 0.5  # fixed plot timestep (s); no slider
+
 
     # Save current as default for next open
     st.session_state.pm_defaults.update({"v0": v0, "angle": angle, "h0": h0, "g": g, "T": T})
