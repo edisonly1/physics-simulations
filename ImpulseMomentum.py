@@ -166,64 +166,14 @@ def app():
                 st.dataframe(editable_df, hide_index=True, use_container_width=True)
 
     with colR:
-        # ---- Controls (shared across plots + animation)
-        st.subheader("Animation controls")
-        t_min, t_max = float(t[0]), float(t[-1])
-        step_time = float(max(dt, (t_max - t_min) / 240.0))
-        if "imp_t_now" not in st.session_state: st.session_state.imp_t_now = t_min
-        if "imp_is_playing" not in st.session_state: st.session_state.imp_is_playing = False
-        if "imp_speed" not in st.session_state: st.session_state.imp_speed = 1.0
-        st.session_state.imp_t_now = float(np.clip(st.session_state.imp_t_now, t_min, t_max))
-
-        c1, c2, c3, _ = st.columns([1, 1, 1, 2])
-        if not st.session_state.imp_is_playing:
-            if c1.button("▶ Play", use_container_width=True):
-                st.session_state.imp_is_playing = True
-                st.rerun()
-        else:
-            if c1.button("⏸ Pause", use_container_width=True):
-                st.session_state.imp_is_playing = False
-                st.rerun()
-        if c2.button("⟲ Reset", use_container_width=True):
-            st.session_state.imp_t_now = t_min
-            st.session_state.imp_is_playing = False
-            st.rerun()
-        st.session_state.imp_speed = c3.select_slider("Speed", options=[0.25,0.5,1.0,1.5,2.0,3.0],
-                                                      value=float(st.session_state.imp_speed))
-
-        t_now = st.slider("Scrub time", t_min, t_max, float(st.session_state.imp_t_now),
-                          step=step_time, format="%.3f", key="imp_scrubber")
-        st.session_state.imp_t_now = float(t_now)
-
-        # ---- Graphs with cursor + partial-impulse shading
-        st.subheader("Force–time (impulse so far)")
-        figF, J_now = plot_force_until(t, F, st.session_state.imp_t_now)
-        show_fig(fig)
-
+        st.subheader("Force–time (area is impulse)")
+        figF = plot_force_with_area(t, F, J_total)
+        st.pyplot(figF, use_container_width=True)
 
         st.subheader("Velocity–time")
-        st.pyplot(plot_velocity_until(t, v, v0, st.session_state.imp_t_now, J_total, m),
-                  use_container_width=True)
+        figV = plot_velocity(t, v, v0, J_total, m)
+        st.pyplot(figV, use_container_width=True)
 
-        # ---- Ball lane
-        st.subheader("Ball being struck")
-        st.pyplot(draw_ball_panel_adv(t, x, v, F, st.session_state.imp_t_now), use_container_width=True)
-
-        # Auto-advance
-        if st.session_state.imp_is_playing:
-            time.sleep(0.016)  # ~60 FPS
-            next_t = st.session_state.imp_t_now + st.session_state.imp_speed * step_time
-            if next_t >= t_max:
-                st.session_state.imp_t_now = t_max
-                st.session_state.imp_is_playing = False
-            else:
-                st.session_state.imp_t_now = float(next_t)
-            st.rerun()
-
-        st.caption(
-            f"Impulse accumulated so far: **J(t) = {J_now:.3f} N·s**.  Cursor syncs graphs and animation. "
-            "Trail length ∝ |v|; pulse height ∝ |F|."
-        )
 
 if __name__ == "__main__":
     st.set_page_config(page_title="Impulse–Momentum", layout="wide")
