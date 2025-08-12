@@ -1,7 +1,6 @@
 # UniformCircularMotion.py
 # AP Physics 1 – Uniform Circular Motion (Streamlit + Matplotlib)
-# Sliders, scrub/play, v & a vectors, optional force breakdown.
-# Updated: longer arrows with slider, labels offset from tips, origin offsets.
+# Arrows start at the mass center; labels offset to the side of the tip.
 
 from __future__ import annotations
 import time
@@ -19,22 +18,46 @@ def unit_tangent(theta: float) -> np.ndarray:
     # tangent, CCW motion
     return np.array([-np.sin(theta),  np.cos(theta)])
 
-def draw_arrow(ax, origin, vec, label=None, scale=1.0, width=0.03, alpha=1.0, text_push=1.10, fontsize=11):
-    """Generic arrow with label nudged past the tip to avoid overlap."""
+def draw_arrow(
+    ax, origin, vec, label=None,
+    scale=1.0, width=0.03, alpha=1.0,
+    label_offset=0.12, fontsize=11
+):
+    """
+    Draw an arrow from origin in direction 'vec' (unit or not).
+    Place the label just past the tip and nudged perpendicular to the arrow,
+    so text is never on top of the arrow.
+    label_offset is a fraction of the arrow length.
+    """
     if np.allclose(vec, 0):
         return
+
     ox, oy = origin
-    vx, vy = vec * scale
+    vx, vy = (vec * scale).astype(float)
     ax.arrow(
         ox, oy, vx, vy,
         length_includes_head=True,
         head_width=width*2.2,
         head_length=width*3.2,
         linewidth=2,
-        alpha=alpha
+        alpha=alpha,
+        zorder=3
     )
+
     if label:
-        ax.text(ox + vx*text_push, oy + vy*text_push, f"{label}", fontsize=fontsize, va="center")
+        # Perpendicular unit vector (rotate 90° CCW)
+        L = float(np.hypot(vx, vy))
+        if L < 1e-9:
+            nx, ny = 0.0, 0.0
+        else:
+            tx, ty = vx / L, vy / L
+            nx, ny = -ty, tx
+
+        # place slightly beyond tip, then nudge sideways by label_offset * L
+        tip_x, tip_y = ox + vx, oy + vy
+        lbl_x = tip_x + nx * (label_offset * max(0.2, L))
+        lbl_y = tip_y + ny * (label_offset * max(0.2, L))
+        ax.text(lbl_x, lbl_y, f"{label}", fontsize=fontsize, va="center", zorder=4)
 
 def value_box(label, value, unit):
     c = st.container()
@@ -75,10 +98,7 @@ def compute_ucm(m, r, v, g, context, theta, mu_s):
         forces["Tension"] = T
         forces["Gravity (inward component)"] = m*g*np.sin(theta)
 
-    return {
-        "ac": ac, "Fc": Fc, "omega": omega, "Tperiod": Tperiod,
-        "forces": forces
-    }
+    return {"ac": ac, "Fc": Fc, "omega": omega, "Tperiod": Tperiod, "forces": forces}
 
 # --------------------------- plotting ---------------------------
 
@@ -91,41 +111,35 @@ def plot_scene(r, theta, show_v, show_a, show_forces, physics, context, g, m, mu
     fig, ax = plt.subplots(figsize=(6.5, 6.5))
     # circle path
     tt = np.linspace(0, 2*np.pi, 400)
-    ax.plot(r*np.cos(tt), r*np.sin(tt), linestyle="--", linewidth=1)
+    ax.plot(r*np.cos(tt), r*np.sin(tt), linestyle="--", linewidth=1, zorder=1)
 
     # object
-    ax.scatter([x], [y], s=140)
+    ax.scatter([x], [y], s=140, zorder=2)
 
-    # vector scaling & tiny origin offsets
+    # vector scaling (relative to r so it looks good across sizes)
     base = max(r, 1.0)
-    scale = r * vec_scale / base              # user-controlled length
-    offset = 0.06 * r                          # nudge arrow bases off the dot
+    scale = r * vec_scale / base
 
     t_hat = unit_tangent(theta)
     r_in  = unit_radial_in(theta)
 
-    pos_v = pos + t_hat * offset
-    pos_a = pos + r_in  * offset
-    pos_g = pos + t_hat * (-offset)           # push mg start slightly off to the side
-    pos_f = pos + r_in  * offset              # friction/tension radial-in
-
     if show_v:
-        draw_arrow(ax, pos_v, t_hat, label="v", scale=scale)
+        draw_arrow(ax, pos, t_hat, label="v", scale=scale)
 
     if show_a:
-        draw_arrow(ax, pos_a, r_in, label="a_c", scale=scale)
+        draw_arrow(ax, pos, r_in, label="a_c", scale=scale)
 
     if show_forces:
         if context in ["Tension (horizontal circle)", "Vertical circle (tension + gravity)"]:
             T = physics["forces"].get("Tension", 0.0)
             if T > 0:
-                draw_arrow(ax, pos_f, r_in, label="T", scale=scale, alpha=0.9)
+                draw_arrow(ax, pos, r_in, label="T", scale=scale, alpha=0.9)
             else:
-                ax.text(x, y-0.18*r, "T=0 (slack)", ha="center", fontsize=10)
+                ax.text(x, y-0.18*r, "T=0 (slack)", ha="center", fontsize=10, zorder=4)
         if context == "Vertical circle (tension + gravity)":
-            draw_arrow(ax, pos_g, np.array([0.0, -1.0]), label="mg", scale=scale, alpha=0.9)
+            draw_arrow(ax, pos, np.array([0.0, -1.0]), label="mg", scale=scale, alpha=0.9)
         if context == "Flat turn (friction provides Fc)":
-            draw_arrow(ax, pos_f, r_in, label="f_s", scale=scale, alpha=0.9)
+            draw_arrow(ax, pos, r_in, label="f_s", scale=scale, alpha=0.9)
 
     # cosmetics
     L = 1.25*r
