@@ -10,6 +10,7 @@ import SpingMass
 import WorkEnergy
 import Collisions1D
 import ImpulseMomentum
+import CircularMotion
 
 st.set_page_config(page_title="Physics Simulation Lab", layout="wide")
 
@@ -30,6 +31,7 @@ page = st.sidebar.selectbox(
         "Work-Energy Theorem",
         "Collisions (1D)",
         "Impulse Momentum"
+        "Uniform Circular Motion"
     ],
 )
 
@@ -86,3 +88,5 @@ elif page == "Collisions (1D)":
     Collisions1D.app()
 elif page == "Impulse Momentum":
     ImpulseMomentum.app()
+elif page == "Uniform Circular Motion":
+    CircularMotion.app()
