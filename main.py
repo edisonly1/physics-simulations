@@ -30,8 +30,8 @@ page = st.sidebar.selectbox(
         "Spring-Mass System",
         "Work-Energy Theorem",
         "Collisions (1D)",
-        "Impulse Momentum"
-        "Uniform Circular Motion"
+        "Impulse Momentum",
+        "Uniform Circular Motion",
     ],
 )
 
